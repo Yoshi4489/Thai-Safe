@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:thai_safe/core/theme/app_theme.dart';
 import 'package:thai_safe/features/authetication/presentation/login_page.dart';
 import 'package:thai_safe/features/welcome/presentation/welcome_page.dart';
 
@@ -14,10 +15,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Thai Safe',
-      theme: ThemeData(
-        scaffoldBackgroundColor: Colors.white,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
+      theme: AppTheme.lightTheme,
       routes: {
         '/': (context) => WelcomePage(),
         '/login': (context) => LoginPage(),
