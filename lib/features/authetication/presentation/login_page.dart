@@ -14,7 +14,7 @@ class LoginPage extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/sign-up');
+              Navigator.pushReplacementNamed(context, '/sign-up');
             },
             child: Text(
               "Sign Up",
@@ -113,7 +113,7 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Text("Or sign in with"),
+                  Text("or sign in with"),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Divider(
