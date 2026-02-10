@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/core/theme/app_theme.dart';
 import 'package:thai_safe/features/authetication/presentation/login_page.dart';
+import 'package:thai_safe/features/authetication/presentation/signup_page.dart';
 import 'package:thai_safe/features/welcome/presentation/welcome_page.dart';
 
 void main() {
@@ -19,6 +20,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => WelcomePage(),
         '/login': (context) => LoginPage(),
+        '/sign-up': (context) => SignupPage(),
       },
     );
   }
