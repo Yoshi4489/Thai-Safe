@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:thai_safe/features/authetication/presentation/widget/text_field_container.dart';
 
-class SignupPage extends StatelessWidget {
+class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
+
+  @override
+  State<SignupPage> createState() => _SignupPageState();
+}
+
+class _SignupPageState extends State<SignupPage> {
+  final TextEditingController _telcontroller = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,19 +57,22 @@ class SignupPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-              TextField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(9999),
+              TextFieldContainer(
+                child: TextField(
+                  controller: _telcontroller,
+                  keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.phone),
+                    hintText: "Telephone",
+                    border: InputBorder.none,
                   ),
-                  hintText: "Telephone",
                 ),
               ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: null,
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(),
                   ),
