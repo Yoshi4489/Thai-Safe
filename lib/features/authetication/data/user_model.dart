@@ -21,17 +21,31 @@ class UserModel {
     required this.createdAt,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) {
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'first_name': firstName,
+      'last_name': lastName,
+      'tel': tel,
+      'role': role,
+      'gender': gender,
+      'age': age,
+      'password': password,
+      'created_at': createdAt,
+    };
+  }
+
+  factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      id: json['id'],
-      firstName: json['first_name'],
-      lastName: json['last_name'],
-      tel: json['tel'],
-      role: json['role'],
-      gender: json['gender'],
-      age: json['age'],
-      password: json['password'],
-      createdAt: json['created_at'],
+      id: map['id'],
+      firstName: map['first_name'],
+      lastName: map['last_name'],
+      tel: map['tel'],
+      role: map['role'],
+      gender: map['gender'],
+      age: map['age'],
+      password: map['password'],
+      createdAt: map['created_at'],
     );
   }
 }
