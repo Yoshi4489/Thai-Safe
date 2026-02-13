@@ -1,28 +1,108 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thai_safe/features/authetication/data/user_model.dart';
 
 class AuthService {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final CollectionReference<Map<String, dynamic>> usersCollection =
       FirebaseFirestore.instance.collection('users');
 
-  // READ: stream user by uid
-  Stream<UserModel> getUser(String uid) {
-    return usersCollection.doc(uid).snapshots().map(
-      (doc) => UserModel.fromMap(doc.data()!),
+  /* =========================
+   * SEND OTP
+   * ========================= */
+  Future<void> sendOtp({
+    required String phoneNumber,
+    required void Function(String verificationId) onCodeSent,
+    required void Function(String error) onError,
+  }) async {
+    await _auth.verifyPhoneNumber(
+      phoneNumber: phoneNumber,
+      timeout: const Duration(seconds: 60),
+
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        // Auto verify (Android only sometimes)
+        await _auth.signInWithCredential(credential);
+      },
+
+      verificationFailed: (FirebaseAuthException e) {
+        onError(e.message ?? 'OTP verification failed');
+      },
+
+      codeSent: (String verificationId, int? resendToken) {
+        onCodeSent(verificationId);
+      },
+
+      codeAutoRetrievalTimeout: (String verificationId) {},
     );
   }
 
-  // CREATE: create user (use uid!)
-  Future<void> createUser(UserModel user) {
-    return usersCollection.doc(user.id).set(user.toMap());
+  /* =========================
+   * VERIFY OTP + LOGIN
+   * ========================= */
+  Future<UserModel> verifyOtpAndLogin({
+    required String verificationId,
+    required String smsCode,
+  }) async {
+    final credential = PhoneAuthProvider.credential(
+      verificationId: verificationId,
+      smsCode: smsCode,
+    );
+
+    final userCredential =
+        await _auth.signInWithCredential(credential);
+
+    final user = userCredential.user;
+    if (user == null) {
+      throw Exception('Authentication failed');
+    }
+
+    final uid = user.uid;
+    final docRef = usersCollection.doc(uid);
+    final doc = await docRef.get();
+
+    // 🔥 FIRST TIME LOGIN → CREATE USER
+    if (!doc.exists) {
+      final newUser = UserModel(
+        id: uid,
+        firstName: '',
+        lastName: '',
+        gender: '',
+        age: 0,
+        tel: user.phoneNumber!,
+        role: 'USER',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+
+      await docRef.set(newUser.toMap());
+      return newUser;
+    }
+
+    return UserModel.fromMap(doc.data()!);
   }
 
-  // UPDATE: update user
+  /* =========================
+   * READ USER BY UID
+   * ========================= */
+  Stream<UserModel> getUserByUID(String uid) {
+    return usersCollection.doc(uid).snapshots().map((doc) {
+      if (!doc.exists) {
+        throw Exception('User not found');
+      }
+      return UserModel.fromMap(doc.data()!);
+    });
+  }
+
+  /* =========================
+   * UPDATE USER
+   * ========================= */
   Future<void> updateUser(String uid, Map<String, dynamic> data) {
     return usersCollection.doc(uid).update(data);
   }
 
-  Future<void> deleteUser(String uid) {
-    return usersCollection.doc(uid).delete();
+  /* =========================
+   * LOGOUT
+   * ========================= */
+  Future<void> logout() async {
+    await _auth.signOut();
   }
 }
