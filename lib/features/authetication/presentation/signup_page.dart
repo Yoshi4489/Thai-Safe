@@ -72,7 +72,9 @@ class _SignupPageState extends State<SignupPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: null,
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/sign-up-otp');
+                  },
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(),
                   ),
