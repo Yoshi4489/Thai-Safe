@@ -57,10 +57,7 @@ class AuthController extends StateNotifier<AuthState> {
         );
       },
       onError: (error) {
-        state = state.copyWith(
-          isLoading: false,
-          error: error,
-        );
+        state = state.copyWith(isLoading: false, error: error);
       },
     );
   }
@@ -88,10 +85,7 @@ class AuthController extends StateNotifier<AuthState> {
 
       state = AuthState(user: user);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
@@ -112,8 +106,9 @@ final authServiceProvider = Provider<AuthService>((ref) {
   return AuthService();
 });
 
-final authControllerProvider =
-    StateNotifierProvider<AuthController, AuthState>((ref) {
-  final authService = ref.read(authServiceProvider);
-  return AuthController(authService);
-});
+final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
+  (ref) {
+    final authService = ref.read(authServiceProvider);
+    return AuthController(authService);
+  },
+);

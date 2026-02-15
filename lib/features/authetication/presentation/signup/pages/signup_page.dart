@@ -1,19 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:thai_safe/core/validators/phone_validator.dart';
 import 'package:thai_safe/features/authetication/presentation/widget/text_field_container.dart';
+import 'package:thai_safe/features/authetication/providers/auth_state_provider.dart';
 
-class SignupPage extends StatefulWidget {
-  const SignupPage({super.key});
-
-  @override
-  State<SignupPage> createState() => _SignupPageState();
-}
-
-class _SignupPageState extends State<SignupPage> {
+class SignupPage extends ConsumerWidget {
+  SignupPage({super.key});
   final TextEditingController _telcontroller = TextEditingController();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<AuthState>(authControllerProvider, (prev, next) {
+      // ERROR
+      if (next.error != null && next.error != prev?.error) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.error!)));
+      }
+
+      // OTP SENT SUCCESS
+      if (next.verificationId != null && prev?.verificationId == null) {
+        Navigator.pushNamed(context, '/sign-up-otp');
+      }
+    });
+
+    final authState = ref.watch(authControllerProvider);
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -61,7 +73,7 @@ class _SignupPageState extends State<SignupPage> {
                 child: TextField(
                   controller: _telcontroller,
                   keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
+                  decoration: InputDecoration(
                     prefixIcon: Icon(Icons.phone),
                     hintText: "Telephone",
                     border: InputBorder.none,
@@ -72,41 +84,51 @@ class _SignupPageState extends State<SignupPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/sign-up-otp');
-                  },
+                  onPressed: authState.isLoading
+                      ? null
+                      : () async {
+                          final phone = _telcontroller.text.trim();
+                          if (!PhoneValidator.isValidThaiPhone(phone)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง",
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
+                          final normalizedPhone =
+                              PhoneValidator.normalizeThaiPhone(phone);
+
+                          await ref
+                              .read(authControllerProvider.notifier)
+                              .sendOtp(normalizedPhone);
+                        },
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(),
                   ),
-                  child: Text("Sign Up"),
+                  child: authState.isLoading
+                      ? CircularProgressIndicator(color: Colors.white)
+                      : Text("Sign Up"),
                 ),
               ),
               const SizedBox(height: 20),
               Row(
                 children: [
-                  Expanded(
-                    child: Divider(
-                      thickness: 1,
-                    ),
-                  ),
+                  Expanded(child: Divider(thickness: 1)),
                   const SizedBox(width: 10),
                   Text("or sign up with"),
                   const SizedBox(width: 10),
-                  Expanded(
-                    child: Divider(
-                      thickness: 1,
-                    ),
-                  ),
+                  Expanded(child: Divider(thickness: 1)),
                 ],
               ),
               const SizedBox(height: 15),
               IconButton(
                 onPressed: null,
-                icon: Image.asset(
-                  "assets/images/auth/ThaiID.png",
-                  height: 40,
-                ),
-              )
+                icon: Image.asset("assets/images/auth/ThaiID.png", height: 40),
+              ),
             ],
           ),
         ),

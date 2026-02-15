@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:thai_safe/core/config/firebase.dart';
 import 'package:thai_safe/features/authetication/data/user_model.dart';
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final CollectionReference<Map<String, dynamic>> usersCollection =
-      FirebaseFirestore.instance.collection('users');
+      firestore.collection('users');
 
   /* =========================
    * SEND OTP
@@ -15,13 +15,13 @@ class AuthService {
     required void Function(String verificationId) onCodeSent,
     required void Function(String error) onError,
   }) async {
-    await _auth.verifyPhoneNumber(
+    await firebaseAuth.verifyPhoneNumber(
       phoneNumber: phoneNumber,
       timeout: const Duration(seconds: 60),
 
       verificationCompleted: (PhoneAuthCredential credential) async {
         // Auto verify (Android only sometimes)
-        await _auth.signInWithCredential(credential);
+        await firebaseAuth.signInWithCredential(credential);
       },
 
       verificationFailed: (FirebaseAuthException e) {
@@ -49,7 +49,7 @@ class AuthService {
     );
 
     final userCredential =
-        await _auth.signInWithCredential(credential);
+        await firebaseAuth.signInWithCredential(credential);
 
     final user = userCredential.user;
     if (user == null) {
@@ -103,6 +103,6 @@ class AuthService {
    * LOGOUT
    * ========================= */
   Future<void> logout() async {
-    await _auth.signOut();
+    await firebaseAuth.signOut();
   }
 }
