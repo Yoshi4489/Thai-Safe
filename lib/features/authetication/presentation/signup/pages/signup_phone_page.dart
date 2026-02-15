@@ -5,8 +5,8 @@ import 'package:thai_safe/core/validators/phone_validator.dart';
 import 'package:thai_safe/features/authetication/presentation/widget/text_field_container.dart';
 import 'package:thai_safe/features/authetication/providers/auth_state_provider.dart';
 
-class SignupPage extends ConsumerWidget {
-  SignupPage({super.key});
+class SignupPhonePage extends ConsumerWidget {
+  SignupPhonePage({super.key});
   final TextEditingController _telcontroller = TextEditingController();
 
   @override
@@ -87,6 +87,7 @@ class SignupPage extends ConsumerWidget {
                   onPressed: authState.isLoading
                       ? null
                       : () async {
+                        // later will check is this phoneNumber already in db if alraedy in we will check is this first login or not
                           final phone = _telcontroller.text.trim();
                           if (!PhoneValidator.isValidThaiPhone(phone)) {
                             ScaffoldMessenger.of(context).showSnackBar(

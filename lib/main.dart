@@ -4,7 +4,8 @@ import 'package:thai_safe/core/config/firebase.dart';
 import 'package:thai_safe/core/theme/app_theme.dart';
 import 'package:thai_safe/features/authetication/presentation/login_page.dart';
 import 'package:thai_safe/features/authetication/presentation/signup/pages/signup_otp_page.dart';
-import 'package:thai_safe/features/authetication/presentation/signup/pages/signup_page.dart';
+import 'package:thai_safe/features/authetication/presentation/signup/pages/signup_phone_page.dart';
+import 'package:thai_safe/features/authetication/presentation/signup/pages/signup_profile_page.dart';
 import 'package:thai_safe/features/welcome/presentation/welcome_page.dart';
 
 void main() async{
@@ -24,8 +25,9 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => WelcomePage(),
         '/login': (context) => LoginPage(),
-        '/sign-up': (context) => SignupPage(),
-        '/sign-up-otp': (context) => SignupOtpPage()
+        '/sign-up': (context) => SignupPhonePage(),
+        '/sign-up-otp': (context) => SignupOtpPage(),
+        '/sign-up-profile': (context) => SignupProfilePage(), 
       },
     );
   }
