@@ -99,8 +99,7 @@ class SignupPage extends ConsumerWidget {
                             return;
                           }
 
-                          final normalizedPhone =
-                              PhoneValidator.normalizeThaiPhone(phone);
+                          final normalizedPhone = PhoneValidator.normalizeThaiPhone(phone);
 
                           await ref
                               .read(authControllerProvider.notifier)
@@ -110,7 +109,11 @@ class SignupPage extends ConsumerWidget {
                     shape: RoundedRectangleBorder(),
                   ),
                   child: authState.isLoading
-                      ? CircularProgressIndicator(color: Colors.white)
+                      ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(color: Colors.white)
+                      )
                       : Text("Sign Up"),
                 ),
               ),

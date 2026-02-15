@@ -11,12 +11,14 @@ class AuthState {
   final UserModel? user;
   final String? error;
   final String? verificationId;
+  final String? phoneNumber;
 
   AuthState({
     this.isLoading = false,
     this.user,
     this.error,
     this.verificationId,
+    this.phoneNumber
   });
 
   AuthState copyWith({
@@ -24,12 +26,14 @@ class AuthState {
     UserModel? user,
     String? error,
     String? verificationId,
+    String? phoneNumber,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
       user: user ?? this.user,
       error: error,
       verificationId: verificationId ?? this.verificationId,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
     );
   }
 }
@@ -46,7 +50,7 @@ class AuthController extends StateNotifier<AuthState> {
    * SEND OTP
    * ----------------------- */
   Future<void> sendOtp(String phoneNumber) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, error: null, phoneNumber: phoneNumber);
 
     await _authService.sendOtp(
       phoneNumber: phoneNumber,
@@ -83,7 +87,7 @@ class AuthController extends StateNotifier<AuthState> {
         smsCode: smsCode,
       );
 
-      state = AuthState(user: user);
+      state = state.copyWith(user: user, error: null, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
