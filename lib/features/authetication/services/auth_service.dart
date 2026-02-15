@@ -70,6 +70,7 @@ class AuthService {
         age: 0,
         tel: user.phoneNumber!,
         role: 'USER',
+        firstLogin: true,
         createdAt: DateTime.now().toIso8601String(),
       );
 

@@ -6,6 +6,7 @@ class UserModel {
   final String role;
   final String gender;
   final int age;
+  final bool firstLogin;
   final String createdAt;
 
   UserModel({
@@ -16,6 +17,7 @@ class UserModel {
     required this.role,
     required this.gender,
     required this.age,
+    required this.firstLogin,
     required this.createdAt,
   });
 
@@ -28,6 +30,7 @@ class UserModel {
       'role': role,
       'gender': gender,
       'age': age,
+      'firstLogin': firstLogin,
       'created_at': createdAt,
     };
   }
@@ -41,6 +44,7 @@ class UserModel {
       role: map['role'],
       gender: map['gender'],
       age: map['age'],
+      firstLogin: map['firstLogin'],
       createdAt: map['created_at'],
     );
   }
