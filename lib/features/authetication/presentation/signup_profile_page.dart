@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/features/authetication/presentation/widget/text_field_container.dart';
+import 'package:thai_safe/features/authetication/providers/auth_state_provider.dart';
 
 class SignupProfilePage extends ConsumerStatefulWidget {
   const SignupProfilePage({super.key});
@@ -21,6 +22,19 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AuthState>(authControllerProvider, (prev, next) {
+      // ERROR
+      if (next.error != null && next.error != prev?.error) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.error!)));
+        return;
+      }
+
+      // SUCCESS
+      // Note: Futre will route to home
+      Navigator.pushNamed(context, "");
+    });
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -159,10 +173,10 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      debugPrint("First name: ${firstNameController.text}");
-      debugPrint("Last name: ${lastNameController.text}");
-      debugPrint("Age: ${ageController.text}");
-      debugPrint("Gender: $selectedGender");
+      String firstName = firstNameController.text.trim();
+      String lastName = lastNameController.text.trim();
+      int age = int.parse(ageController.text);
+      ref.watch(authControllerProvider.notifier).updateProfile(firstName: firstName, lastName: lastName, age: age, gender: selectedGender);
     }
   }
 

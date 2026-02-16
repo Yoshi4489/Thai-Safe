@@ -18,7 +18,7 @@ class AuthState {
     this.user,
     this.error,
     this.verificationId,
-    this.phoneNumber
+    this.phoneNumber,
   });
 
   AuthState copyWith({
@@ -50,7 +50,11 @@ class AuthController extends StateNotifier<AuthState> {
    * SEND OTP
    * ----------------------- */
   Future<void> sendOtp(String phoneNumber) async {
-    state = state.copyWith(isLoading: true, error: null, phoneNumber: phoneNumber);
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      phoneNumber: phoneNumber,
+    );
 
     await _authService.sendOtp(
       phoneNumber: phoneNumber,
@@ -90,6 +94,41 @@ class AuthController extends StateNotifier<AuthState> {
       state = state.copyWith(user: user, error: null, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
+  /* -----------------------
+   * UPDATE PROFILE
+   * ----------------------- */
+  Future<void> updateProfile({
+    String? firstName,
+    String? lastName,
+    int? age,
+    String? gender
+  }) async {
+    final user = state.user;
+
+    if (user == null) {
+      state = state.copyWith(error: "User not found");
+      return Future.error("User not found");
+    }
+
+    try {
+      state = state.copyWith(isLoading: true, error: null);
+
+      final updatedUser = user.copyWith(
+        firstName: firstName ?? user.firstName,
+        lastName: lastName ?? user.lastName,
+        age: age ?? user.age,
+        gender: gender ?? user.gender,
+        firstLogin: false,
+      );
+
+      state = state.copyWith(user: updatedUser, isLoading: false);
+      _authService.updateUser(user.id, updatedUser.toMap());
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
     }
   }
 

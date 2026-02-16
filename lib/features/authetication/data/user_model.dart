@@ -48,4 +48,28 @@ class UserModel {
       createdAt: map['created_at'],
     );
   }
+
+  UserModel copyWith({
+    String? id,
+    String? firstName,
+    String? lastName,
+    String? tel,
+    String? role,
+    String? gender,
+    int? age,
+    bool? firstLogin,
+    String? createdAt,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      tel: tel ?? this.tel,
+      role: role ?? this.role,
+      gender: gender ?? this.gender,
+      age: age ?? this.age,
+      firstLogin: firstLogin ?? this.firstLogin,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }
