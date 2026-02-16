@@ -40,7 +40,7 @@ class _WelcomePageState extends State<WelcomePage> {
         actions: [
           ElevatedButton(
             onPressed: () {
-              Navigator.pushReplacementNamed(context, '/login');
+              Navigator.pushReplacementNamed(context, '/sign-up');
             },
             child: Text(
               pageIndex == 3 ? 'เริ่มต้นใช้งาน' : 'ข้าม',

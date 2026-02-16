@@ -27,21 +27,6 @@ class SignupPhonePage extends ConsumerWidget {
 
     final authState = ref.watch(authControllerProvider);
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-            child: Text(
-              "Log In",
-              style: TextStyle(
-                decoration: TextDecoration.underline,
-                fontSize: 18,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-        ],
-      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Center(

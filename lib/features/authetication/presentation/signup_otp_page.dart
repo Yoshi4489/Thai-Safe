@@ -88,7 +88,7 @@ class _SignupOtpPageState extends ConsumerState<SignupOtpPage> {
         return;
       }
       else {
-        print("Success");
+        Navigator.pushNamed(context, "/sign-up-profile");
       }
     });
     return Scaffold(
