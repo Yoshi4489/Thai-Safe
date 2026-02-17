@@ -5,6 +5,7 @@ import 'package:thai_safe/features/welcome/presentation/pages/welcome_page_2.dar
 import 'package:thai_safe/features/welcome/presentation/pages/welcome_page_3.dart';
 import 'package:thai_safe/features/welcome/presentation/pages/welcome_page_4.dart';
 import 'package:thai_safe/features/welcome/presentation/widget/dots_indicator.dart';
+import 'package:thai_safe/features/maps_alert/presentation/pages/map_alert_page.dart';
 
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
@@ -38,6 +39,24 @@ class _WelcomePageState extends State<WelcomePage> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const MapAlertPage()),
+              );
+            },
+            child: const Text(
+              'By Pass',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
           ElevatedButton(
             onPressed: () {
               Navigator.pushReplacementNamed(context, '/sign-up');
