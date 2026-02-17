@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:thai_safe/features/welcome/presentation/pages/welcome_page_1.dart';
 import 'package:thai_safe/features/welcome/presentation/pages/welcome_page_2.dart';
 import 'package:thai_safe/features/welcome/presentation/pages/welcome_page_3.dart';

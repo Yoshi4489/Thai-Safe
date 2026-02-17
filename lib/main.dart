@@ -5,6 +5,7 @@ import 'package:thai_safe/core/theme/app_theme.dart';
 import 'package:thai_safe/features/authetication/presentation/signup_otp_page.dart';
 import 'package:thai_safe/features/authetication/presentation/signup_phone_page.dart';
 import 'package:thai_safe/features/authetication/presentation/signup_profile_page.dart';
+import 'package:thai_safe/features/home/presentation/home_page.dart';
 import 'package:thai_safe/features/welcome/presentation/welcome_page.dart';
 
 void main() async{
@@ -25,7 +26,8 @@ class MyApp extends StatelessWidget {
         '/': (context) => WelcomePage(),
         '/sign-up': (context) => SignupPhonePage(),
         '/sign-up-otp': (context) => SignupOtpPage(),
-        '/sign-up-profile': (context) => SignupProfilePage(), 
+        '/sign-up-profile': (context) => SignupProfilePage(),
+        '/home': (context) => HomePage(), 
       },
     );
   }

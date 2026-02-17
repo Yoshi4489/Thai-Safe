@@ -32,8 +32,9 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
       }
 
       // SUCCESS
-      // Note: Futre will route to home
-      Navigator.pushNamed(context, "");
+      if (next.user!.firstLogin != true) {
+        Navigator.pushNamed(context, "/home");
+      }
     });
     return Scaffold(
       appBar: AppBar(
