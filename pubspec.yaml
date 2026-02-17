@@ -41,6 +41,12 @@ dependencies:
   cloud_firestore: ^6.1.2
   firebase_auth: ^6.1.4
 
+  #--- Maps Alert ---
+  google_maps_flutter: ^2.5.3
+  geolocator: ^11.0.0
+  image_picker: ^1.0.7
+  permission_handler: ^11.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

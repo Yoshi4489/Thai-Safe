@@ -1,3 +1,13 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+// โหลดไฟล์ local.properties ด้วยภาษา Kotlin
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
+}
+
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -31,6 +41,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // API KEY GOOGLE MAPS CONFIG
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
     }
 
     buildTypes {
