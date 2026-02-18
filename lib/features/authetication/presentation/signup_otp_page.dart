@@ -72,7 +72,7 @@ class _SignupOtpPageState extends ConsumerState<SignupOtpPage> {
       if (next.user!.firstLogin == true) {
         Navigator.pushReplacementNamed(context, "/sign-up-profile");
       } else {
-        Navigator.pushReplacementNamed(context, "/home");
+        Navigator.pushReplacementNamed(context, "/app");
       }
     });
 

@@ -33,7 +33,7 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
 
       // SUCCESS
       if (next.user!.firstLogin != true) {
-        Navigator.pushNamed(context, "/home");
+        Navigator.pushNamed(context, "/app");
       }
     });
     return Scaffold(
