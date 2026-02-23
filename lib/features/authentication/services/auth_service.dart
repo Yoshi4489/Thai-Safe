@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thai_safe/core/config/firebase.dart';
-import 'package:thai_safe/features/authetication/data/user_model.dart';
+import 'package:thai_safe/features/authentication/data/user_model.dart';
 
 class AuthService {
   final CollectionReference<Map<String, dynamic>> usersCollection =

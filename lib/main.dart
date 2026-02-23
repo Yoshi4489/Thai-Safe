@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/core/config/firebase.dart';
 import 'package:thai_safe/core/theme/app_theme.dart';
 import 'package:thai_safe/features/app_shell.dart';
-import 'package:thai_safe/features/authetication/presentation/signup_otp_page.dart';
-import 'package:thai_safe/features/authetication/presentation/signup_phone_page.dart';
-import 'package:thai_safe/features/authetication/presentation/signup_profile_page.dart';
+import 'package:thai_safe/features/authentication/presentation/signup_otp_page.dart';
+import 'package:thai_safe/features/authentication/presentation/signup_phone_page.dart';
+import 'package:thai_safe/features/authentication/presentation/signup_profile_page.dart';
 import 'package:thai_safe/features/welcome/presentation/welcome_page.dart';
 
 void main() async{

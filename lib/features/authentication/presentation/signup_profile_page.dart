@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:thai_safe/features/authetication/presentation/widget/text_field_container.dart';
-import 'package:thai_safe/features/authetication/providers/auth_state_provider.dart';
+import 'package:thai_safe/features/authentication/presentation/widget/text_field_container.dart';
+import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 
 class SignupProfilePage extends ConsumerStatefulWidget {
   const SignupProfilePage({super.key});

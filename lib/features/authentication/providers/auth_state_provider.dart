@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:thai_safe/features/authetication/data/user_model.dart';
-import 'package:thai_safe/features/authetication/services/auth_service.dart';
+import 'package:thai_safe/features/authentication/data/user_model.dart';
+import 'package:thai_safe/features/authentication/services/auth_service.dart';
 
 /// =======================
 /// STATE
