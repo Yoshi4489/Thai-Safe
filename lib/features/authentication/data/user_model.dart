@@ -3,7 +3,7 @@ class UserModel {
   final String firstName;
   final String lastName;
   final String tel;
-  final String profile;
+  final String profile_url;
   final String role;
   final String gender;
   final int age;
@@ -15,7 +15,7 @@ class UserModel {
     required this.firstName,
     required this.lastName,
     required this.tel,
-    required this.profile,
+    required this.profile_url,
     required this.role,
     required this.gender,
     required this.age,
@@ -29,7 +29,7 @@ class UserModel {
       'first_name': firstName,
       'last_name': lastName,
       'tel': tel,
-      'profile': profile,
+      'profile_url': profile_url,
       'role': role,
       'gender': gender,
       'age': age,
@@ -44,7 +44,7 @@ class UserModel {
       firstName: map['first_name'],
       lastName: map['last_name'],
       tel: map['tel'],
-      profile: map['profile'],
+      profile_url: map['profile_url'],
       role: map['role'],
       gender: map['gender'],
       age: map['age'],
@@ -58,7 +58,7 @@ class UserModel {
     String? firstName,
     String? lastName,
     String? tel,
-    String? profile,
+    String? profile_url,
     String? role,
     String? gender,
     int? age,
@@ -70,7 +70,7 @@ class UserModel {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       tel: tel ?? this.tel,
-      profile: profile ?? this.profile,
+      profile_url: profile_url ?? this.profile_url,
       role: role ?? this.role,
       gender: gender ?? this.gender,
       age: age ?? this.age,

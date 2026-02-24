@@ -72,7 +72,7 @@ class AuthService {
         firstName: '',
         lastName: '',
         gender: '',
-        profile: "This will be default image url",
+        profile_url: "",
         age: 0,
         tel: user.phoneNumber!,
         role: 'USER',

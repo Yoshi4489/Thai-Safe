@@ -1,13 +1,32 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:thai_safe/core/services/cloudinary_provider.dart';
+import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 
-class ProfilePage extends StatelessWidget {
-  ProfilePage({super.key});
-
-  final cloud_url = Uri.parse("${dotenv.env['CLOUD_URL']}/${dotenv.env['CLOUD_NAME']}/upload");
-
+class ProfilePage extends ConsumerStatefulWidget {
+  const ProfilePage({super.key});
   @override
-  Widget build(BuildContext context) {
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends ConsumerState<ProfilePage> {
+  File? _imageFile;
+
+  Future<void> _pickImage(ImageSource source) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(source: source);
+    setState(() {
+        if (pickedFile != null) {
+          _imageFile = File(pickedFile.path);
+        };
+    });
+  }
+  @override
+  Widget build(BuildContext) {
+    final _cloudProvider = ref.watch(cloudinaryServiceProvider);
+    final _authController = ref.watch(authControllerProvider);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -20,8 +39,72 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _sectionTitle("ข้อมูลส่วนตัว"),
 
-            _profileHeader(),
+            const SizedBox(height: 24),
+
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () async {
+                    await _pickImage(ImageSource.camera);
+                    if (_imageFile != null) {
+                      final res = await _cloudProvider.uploadImage(_imageFile!);
+                      if (res.isNotEmpty) {
+                        ref.read(authControllerProvider.notifier).updateProfile(profile_url: res);
+                      }
+                    }
+                  },
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 40,
+                        backgroundImage:
+                            _authController.user?.profile_url != null
+                            ? NetworkImage(_authController.user!.profile_url)
+                            : null,
+                        child: _authController.user?.profile_url == null
+                            ? const Icon(Icons.person, size: 40)
+                            : null,
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            color: Colors.blue,
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(6),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        "ชื่อ นามสกุล",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text("เบอร์โทรศัพท์"),
+                    ],
+                  ),
+                ),
+              ],
+            ),
 
             const SizedBox(height: 24),
 
@@ -71,6 +154,22 @@ class ProfilePage extends StatelessWidget {
               hint: "0xx-xxx-xxxx",
             ),
 
+            const SizedBox(height: 16),
+
+            _medicalTextField(
+              icon: Icons.person_outline,
+              label: "ชื่อผู้ติดต่อ",
+              hint: "ชื่อ – นามสกุล",
+            ),
+
+            const SizedBox(height: 16),
+
+            _medicalTextField(
+              icon: Icons.phone_outlined,
+              label: "เบอร์โทรศัพท์",
+              hint: "0xx-xxx-xxxx",
+            ),
+
             const SizedBox(height: 32),
 
             SizedBox(
@@ -90,8 +189,6 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // ---------------- WIDGETS ----------------
-
   Widget _profileHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -101,10 +198,7 @@ class ProfilePage extends StatelessWidget {
       ),
       child: Row(
         children: const [
-          CircleAvatar(
-            radius: 30,
-            child: Icon(Icons.person, size: 32),
-          ),
+          CircleAvatar(radius: 30, child: Icon(Icons.person, size: 32)),
           SizedBox(width: 16),
           Expanded(
             child: Text(
@@ -137,14 +231,12 @@ class ProfilePage extends StatelessWidget {
           DropdownButton<String>(
             hint: const Text("เลือก"),
             underline: const SizedBox(),
-            items: ["A", "B", "AB", "O"]
-                .map(
-                  (g) => DropdownMenuItem(
-                    value: g,
-                    child: Text(g),
-                  ),
-                )
-                .toList(),
+            items: [
+              "A",
+              "B",
+              "AB",
+              "O",
+            ].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
             onChanged: (_) {},
           ),
         ],
@@ -160,10 +252,7 @@ class ProfilePage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 6),
         TextField(
           maxLines: null,
@@ -187,10 +276,7 @@ class ProfilePage extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }

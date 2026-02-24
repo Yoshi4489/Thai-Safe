@@ -105,7 +105,8 @@ class AuthController extends StateNotifier<AuthState> {
     String? firstName,
     String? lastName,
     int? age,
-    String? gender
+    String? gender,
+    String? profile_url
   }) async {
     final user = state.user;
 
@@ -122,6 +123,7 @@ class AuthController extends StateNotifier<AuthState> {
         lastName: lastName ?? user.lastName,
         age: age ?? user.age,
         gender: gender ?? user.gender,
+        profile_url: profile_url ?? user.profile_url,
         firstLogin: false,
       );
 

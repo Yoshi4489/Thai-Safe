@@ -11,7 +11,7 @@ import 'package:thai_safe/features/welcome/presentation/welcome_page.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: "env");
+  await dotenv.load(fileName: ".env");
   await initFirebase();
   runApp(const ProviderScope(child: MyApp()));
 }
