@@ -4,8 +4,13 @@ import 'package:thai_safe/core/config/firebase.dart';
 import 'package:thai_safe/features/authentication/data/user_model.dart';
 
 class AuthService {
+  final _auth = FirebaseAuth.instance;
   final CollectionReference<Map<String, dynamic>> usersCollection =
       firestore.collection('users');
+
+  Stream<User?> authStateChanges() {
+    return _auth.authStateChanges();
+  }
 
   /* =========================
    * SEND OTP
@@ -67,6 +72,7 @@ class AuthService {
         firstName: '',
         lastName: '',
         gender: '',
+        profile: "This will be default image url",
         age: 0,
         tel: user.phoneNumber!,
         role: 'USER',

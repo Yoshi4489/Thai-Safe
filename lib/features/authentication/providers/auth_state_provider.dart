@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:thai_safe/features/authentication/data/user_model.dart';
@@ -155,3 +156,8 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
     return AuthController(authService);
   },
 );
+
+final authStateProvider = StreamProvider<User?>((ref) {
+  final authService = ref.watch(authServiceProvider);
+  return authService.authStateChanges();  
+});

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+  ProfilePage({super.key});
+
+  final cloud_url = Uri.parse("${dotenv.env['CLOUD_URL']}/${dotenv.env['CLOUD_NAME']}/upload");
 
   @override
   Widget build(BuildContext context) {
