@@ -11,6 +11,7 @@ class HomePage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         elevation: 0,
         title: Text(
           "สวัสดี ${user?.firstName ?? ''}",
