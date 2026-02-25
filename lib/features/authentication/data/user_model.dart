@@ -6,7 +6,7 @@ class UserModel {
   final String profile_url;
   final String role;
   final String gender;
-  final int age;
+  final DateTime birthdate;
   final bool firstLogin;
   final String createdAt;
 
@@ -18,7 +18,7 @@ class UserModel {
     required this.profile_url,
     required this.role,
     required this.gender,
-    required this.age,
+    required this.birthdate,
     required this.firstLogin,
     required this.createdAt,
   });
@@ -32,7 +32,7 @@ class UserModel {
       'profile_url': profile_url,
       'role': role,
       'gender': gender,
-      'age': age,
+      'birthdate': birthdate,
       'firstLogin': firstLogin,
       'created_at': createdAt,
     };
@@ -47,7 +47,7 @@ class UserModel {
       profile_url: map['profile_url'],
       role: map['role'],
       gender: map['gender'],
-      age: map['age'],
+      birthdate: DateTime.parse(map['birthdate']),
       firstLogin: map['firstLogin'],
       createdAt: map['created_at'],
     );
@@ -61,7 +61,7 @@ class UserModel {
     String? profile_url,
     String? role,
     String? gender,
-    int? age,
+    DateTime? birthdate,
     bool? firstLogin,
     String? createdAt,
   }) {
@@ -73,7 +73,7 @@ class UserModel {
       profile_url: profile_url ?? this.profile_url,
       role: role ?? this.role,
       gender: gender ?? this.gender,
-      age: age ?? this.age,
+      birthdate: birthdate ?? this.birthdate,
       firstLogin: firstLogin ?? this.firstLogin,
       createdAt: createdAt ?? this.createdAt,
     );

@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:thai_safe/features/authentication/data/user_model.dart';
@@ -104,7 +103,7 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> updateProfile({
     String? firstName,
     String? lastName,
-    int? age,
+    DateTime? birthdate,
     String? gender,
     String? profile_url
   }) async {
@@ -121,7 +120,7 @@ class AuthController extends StateNotifier<AuthState> {
       final updatedUser = user.copyWith(
         firstName: firstName ?? user.firstName,
         lastName: lastName ?? user.lastName,
-        age: age ?? user.age,
+        birthdate: birthdate ?? user.birthdate,
         gender: gender ?? user.gender,
         profile_url: profile_url ?? user.profile_url,
         firstLogin: false,

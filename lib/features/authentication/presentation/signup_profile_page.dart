@@ -15,10 +15,15 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
 
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
-  final ageController = TextEditingController();
-
+  final birthDateController = TextEditingController();
+  DateTime? selectedBirthDate;
   final genders = ["ชาย", "หญิง", "ไม่ระบุ"];
   String? selectedGender;
+
+  String formatThaiDate(DateTime date) {
+    final buddhistYear = date.year + 543;
+    return "${date.day}/${date.month}/$buddhistYear";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +54,6 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               _sectionTitle("ข้อมูลพื้นฐาน"),
 
               _label("ชื่อจริง"),
@@ -61,8 +65,9 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
                     hintText: "กรอกชื่อจริง",
                     border: InputBorder.none,
                   ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? "กรุณากรอกชื่อจริง" : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? "กรุณากรอกชื่อจริง"
+                      : null,
                 ),
               ),
 
@@ -77,31 +82,44 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
                     hintText: "กรอกนามสกุล",
                     border: InputBorder.none,
                   ),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? "กรุณากรอกนามสกุล" : null,
+                  validator: (value) => value == null || value.isEmpty
+                      ? "กรุณากรอกนามสกุล"
+                      : null,
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              _label("อายุ"),
+              _label("วันเกิด"),
               TextFieldContainer(
                 child: TextFormField(
-                  controller: ageController,
-                  keyboardType: TextInputType.number,
+                  controller: birthDateController,
+                  readOnly: true,
                   decoration: const InputDecoration(
                     prefixIcon: Icon(Icons.cake_outlined),
-                    hintText: "อายุ",
+                    hintText: "เลือกวันเกิด (พ.ศ.)",
                     border: InputBorder.none,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "กรุณากรอกอายุ";
+                  validator: (value) => value == null || value.isEmpty
+                      ? "กรุณาเลือกวันเกิด"
+                      : null,
+                  onTap: () async {
+                    FocusScope.of(context).unfocus();
+
+                    final pickedDate = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime(2005),
+                      firstDate: DateTime(1900),
+                      lastDate: DateTime.now(),
+                      locale: const Locale("th", "TH"), // ภาษาไทย
+                    );
+
+                    if (pickedDate != null) {
+                      setState(() {
+                        selectedBirthDate = pickedDate;
+                        birthDateController.text = formatThaiDate(pickedDate);
+                      });
                     }
-                    if (int.tryParse(value) == null) {
-                      return "กรุณากรอกตัวเลขเท่านั้น";
-                    }
-                    return null;
                   },
                 ),
               ),
@@ -139,11 +157,8 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
                       selectedGender = value;
                     });
                   },
-                  validator: (value) =>
-                      value == null ? "กรุณาเลือกเพศ" : null,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                  ),
+                  validator: (value) => value == null ? "กรุณาเลือกเพศ" : null,
+                  decoration: const InputDecoration(border: InputBorder.none),
                 ),
               ),
 
@@ -159,10 +174,7 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    "ถัดไป",
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: const Text("ถัดไป", style: TextStyle(fontSize: 16)),
                 ),
               ),
             ],
@@ -174,10 +186,14 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      String firstName = firstNameController.text.trim();
-      String lastName = lastNameController.text.trim();
-      int age = int.parse(ageController.text);
-      ref.watch(authControllerProvider.notifier).updateProfile(firstName: firstName, lastName: lastName, age: age, gender: selectedGender);
+      ref
+          .read(authControllerProvider.notifier)
+          .updateProfile(
+            firstName: firstNameController.text.trim(),
+            lastName: lastNameController.text.trim(),
+            birthdate: selectedBirthDate!,
+            gender: selectedGender,
+          );
     }
   }
 
@@ -186,10 +202,7 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
       padding: const EdgeInsets.only(bottom: 16),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -197,10 +210,7 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
   Widget _label(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        text,
-        style: const TextStyle(fontWeight: FontWeight.w500),
-      ),
+      child: Text(text, style: const TextStyle(fontWeight: FontWeight.w500)),
     );
   }
 }

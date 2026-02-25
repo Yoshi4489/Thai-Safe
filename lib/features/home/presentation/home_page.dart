@@ -8,7 +8,6 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authControllerProvider).user;
-
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -36,7 +35,7 @@ class HomePage extends ConsumerWidget {
             const SizedBox(height: 24),
 
             /// 🚨 SOS BUTTON
-            _sosButton(),
+            _sosButton(ref),
 
             const SizedBox(height: 24),
 
@@ -79,7 +78,7 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _sosButton() {
+  Widget _sosButton(WidgetRef ref) {
     return Center(
       child: Column(
         children: [
@@ -97,13 +96,18 @@ class HomePage extends ConsumerWidget {
                 ),
               ],
             ),
-            child: const Center(
-              child: Text(
-                "SOS",
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+            child: GestureDetector(
+              onTap: () async {
+                await ref.watch(authControllerProvider.notifier).logout();
+              },
+              child: const Center(
+                child: Text(
+                  "SOS",
+                  style: TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

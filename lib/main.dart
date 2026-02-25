@@ -8,7 +8,6 @@ import 'package:thai_safe/features/authentication/presentation/auth_gate.dart';
 import 'package:thai_safe/features/authentication/presentation/signup_otp_page.dart';
 import 'package:thai_safe/features/authentication/presentation/signup_phone_page.dart';
 import 'package:thai_safe/features/authentication/presentation/signup_profile_page.dart';
-import 'package:thai_safe/features/welcome/presentation/welcome_page.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
