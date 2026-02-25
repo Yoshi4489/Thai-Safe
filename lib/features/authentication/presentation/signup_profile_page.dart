@@ -16,9 +16,18 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final birthDateController = TextEditingController();
+  
   DateTime? selectedBirthDate;
   final genders = ["ชาย", "หญิง", "ไม่ระบุ"];
   String? selectedGender;
+
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    birthDateController.dispose();
+    super.dispose();
+  }
 
   String formatThaiDate(DateTime date) {
     final buddhistYear = date.year + 543;
@@ -28,19 +37,18 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authControllerProvider, (prev, next) {
-      // ERROR
       if (next.error != null && next.error != prev?.error) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(next.error!)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.error!)),
+        );
         return;
       }
 
-      // SUCCESS
-      if (next.user!.firstLogin != true) {
-        Navigator.pushNamed(context, "/app");
+      if (next.user != null && next.user!.firstLogin != true) {
+        Navigator.pushReplacementNamed(context, "/app");
       }
     });
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -111,7 +119,7 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
                       initialDate: DateTime(2005),
                       firstDate: DateTime(1900),
                       lastDate: DateTime.now(),
-                      locale: const Locale("th", "TH"), // ภาษาไทย
+                      locale: const Locale("th", "TH"),
                     );
 
                     if (pickedDate != null) {
@@ -137,21 +145,17 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
                       Text("เลือกเพศ"),
                     ],
                   ),
-                  items: genders
-                      .map(
-                        (g) => DropdownMenuItem(
-                          value: g,
-                          child: Row(
-                            children: [
-                              const SizedBox(width: 12),
-                              Icon(Icons.wc_outlined),
-                              const SizedBox(width: 8),
-                              Text(g),
-                            ],
-                          ),
+                  items: genders.map((g) => DropdownMenuItem(
+                        value: g,
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 12),
+                            const Icon(Icons.wc_outlined),
+                            const SizedBox(width: 8),
+                            Text(g),
+                          ],
                         ),
-                      )
-                      .toList(),
+                      )).toList(),
                   onChanged: (value) {
                     setState(() {
                       selectedGender = value;
@@ -185,10 +189,8 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
   }
 
   void _submit() {
-    if (_formKey.currentState!.validate()) {
-      ref
-          .read(authControllerProvider.notifier)
-          .updateProfile(
+    if (_formKey.currentState!.validate() && selectedBirthDate != null) {
+      ref.read(authControllerProvider.notifier).updateProfile(
             firstName: firstNameController.text.trim(),
             lastName: lastNameController.text.trim(),
             birthdate: selectedBirthDate!,

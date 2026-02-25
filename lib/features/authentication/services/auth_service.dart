@@ -8,14 +8,14 @@ class AuthService {
   final CollectionReference<Map<String, dynamic>> usersCollection = firestore
       .collection('users');
 
-  Stream<UserModel?> authStateChanges() {
-    return _auth
-        .authStateChanges()
-        .map((user) {
-          if (user == null) return null;
-          return getUserByUID(user.uid);
-        })
-        .asyncExpand((stream) => stream);
+  Stream<UserModel?> authStateChanges() async* {
+    await for (final user in _auth.authStateChanges()) {
+      if (user == null) {
+        yield null;
+      } else {
+        yield* getUserByUID(user.uid);
+      }
+    }
   }
 
   /* =========================
@@ -82,7 +82,7 @@ class AuthService {
         tel: user.phoneNumber!,
         role: 'USER',
         firstLogin: true,
-        createdAt: DateTime.now().toIso8601String(),
+        createdAt: DateTime.now(),
       );
 
       await docRef.set(newUser.toMap());

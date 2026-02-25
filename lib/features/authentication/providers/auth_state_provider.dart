@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:thai_safe/features/authentication/data/user_model.dart';
@@ -43,8 +45,13 @@ class AuthState {
 /// =======================
 class AuthController extends StateNotifier<AuthState> {
   final AuthService _authService;
+  StreamSubscription<UserModel?>? _authSubscription;
 
-  AuthController(this._authService) : super(AuthState());
+  AuthController(this._authService) : super(AuthState()) {
+    _authSubscription = _authService.authStateChanges().listen((user) {
+      state = state.copyWith(user: user);
+    }); 
+  }
 
   /* -----------------------
    * SEND OTP

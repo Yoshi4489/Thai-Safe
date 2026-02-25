@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserModel {
   final String id;
   final String firstName;
@@ -8,7 +10,7 @@ class UserModel {
   final String gender;
   final DateTime birthdate;
   final bool firstLogin;
-  final String createdAt;
+  final DateTime createdAt; // ✅ เปลี่ยนเป็น DateTime
 
   UserModel({
     required this.id,
@@ -23,6 +25,7 @@ class UserModel {
     required this.createdAt,
   });
 
+  /// 🔹 Save to Firestore
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -32,12 +35,13 @@ class UserModel {
       'profile_url': profile_url,
       'role': role,
       'gender': gender,
-      'birthdate': birthdate,
+      'birthdate': Timestamp.fromDate(birthdate),
       'firstLogin': firstLogin,
-      'created_at': createdAt,
+      'created_at': Timestamp.fromDate(createdAt),
     };
   }
 
+  /// 🔹 Read from Firestore
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       id: map['id'],
@@ -47,9 +51,9 @@ class UserModel {
       profile_url: map['profile_url'],
       role: map['role'],
       gender: map['gender'],
-      birthdate: DateTime.parse(map['birthdate']),
+      birthdate: (map['birthdate'] as Timestamp).toDate(),
       firstLogin: map['firstLogin'],
-      createdAt: map['created_at'],
+      createdAt: (map['created_at'] as Timestamp).toDate(),
     );
   }
 
@@ -63,7 +67,7 @@ class UserModel {
     String? gender,
     DateTime? birthdate,
     bool? firstLogin,
-    String? createdAt,
+    DateTime? createdAt,
   }) {
     return UserModel(
       id: id ?? this.id,
