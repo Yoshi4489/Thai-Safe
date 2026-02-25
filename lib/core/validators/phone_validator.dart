@@ -9,4 +9,15 @@ class PhoneValidator {
     }
     return phone;
   }
+
+  static String convertToNormalPhone(String phone) {
+    if (phone.startsWith("+66")) {
+      return '0${phone.substring(3)}';
+    }
+    if (phone.startsWith("+")) {
+      return '0${phone.substring(1)}';
+    }
+
+    return phone;
+  }
 }

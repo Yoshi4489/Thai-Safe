@@ -10,7 +10,7 @@ class UserModel {
   final String gender;
   final DateTime birthdate;
   final bool firstLogin;
-  final DateTime createdAt; // ✅ เปลี่ยนเป็น DateTime
+  final DateTime createdAt;
 
   UserModel({
     required this.id,

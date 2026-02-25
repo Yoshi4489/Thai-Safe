@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:thai_safe/core/services/cloudinary_provider.dart';
+import 'package:thai_safe/core/validators/phone_validator.dart';
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -13,6 +14,11 @@ class ProfilePage extends ConsumerStatefulWidget {
 
 class _ProfilePageState extends ConsumerState<ProfilePage> {
   File? _imageFile;
+  String? _selectedBloodType;
+  String? chronic_diseases;
+  String? regular_medications;
+  String? allergies;
+  Map<String, String>? contact_list;
 
   Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
@@ -23,6 +29,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         };
     });
   }
+  
   @override
   Widget build(BuildContext) {
     final _cloudProvider = ref.watch(cloudinaryServiceProvider);
@@ -90,21 +97,24 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
+                    children: [
                       Text(
-                        "ชื่อ นามสกุล",
+                        "${_authController.user?.firstName ?? "ชื่อจริง"} ${_authController.user?.lastName ?? "นามสกล"}",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       SizedBox(height: 4),
-                      Text("เบอร์โทรศัพท์"),
+                      Text(PhoneValidator.convertToNormalPhone(_authController.user?.tel ?? "")),
                     ],
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 24,),
+
+            _profileHeader(),
 
             const SizedBox(height: 24),
 
@@ -230,6 +240,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           const Spacer(),
           DropdownButton<String>(
             hint: const Text("เลือก"),
+            value: _selectedBloodType,
             underline: const SizedBox(),
             items: [
               "A",
@@ -237,7 +248,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               "AB",
               "O",
             ].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
-            onChanged: (_) {},
+            onChanged: (value) {
+              setState(() {
+                _selectedBloodType = value;
+              });
+            },
           ),
         ],
       ),
