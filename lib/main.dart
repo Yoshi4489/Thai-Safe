@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/core/config/firebase.dart';
 import 'package:thai_safe/core/theme/app_theme.dart';
 import 'package:thai_safe/features/app_shell.dart';
+import 'package:thai_safe/features/authentication/presentation/auth_gate.dart';
 import 'package:thai_safe/features/authentication/presentation/signup_otp_page.dart';
 import 'package:thai_safe/features/authentication/presentation/signup_phone_page.dart';
 import 'package:thai_safe/features/authentication/presentation/signup_profile_page.dart';
@@ -24,8 +25,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Thai Safe',
       theme: AppTheme.lightTheme,
+      home: const AuthGate(),
       routes: {
-        '/': (context) => WelcomePage(),
         '/sign-up': (context) => SignupPhonePage(),
         '/sign-up-otp': (context) => SignupOtpPage(),
         '/sign-up-profile': (context) => SignupProfilePage(),

@@ -159,7 +159,7 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
   },
 );
 
-final authStateProvider = StreamProvider<User?>((ref) {
+final authStateProvider = StreamProvider<UserModel?>((ref) {
   final authService = ref.watch(authServiceProvider);
   return authService.authStateChanges();  
 });

@@ -5,11 +5,17 @@ import 'package:thai_safe/features/authentication/data/user_model.dart';
 
 class AuthService {
   final _auth = FirebaseAuth.instance;
-  final CollectionReference<Map<String, dynamic>> usersCollection =
-      firestore.collection('users');
+  final CollectionReference<Map<String, dynamic>> usersCollection = firestore
+      .collection('users');
 
-  Stream<User?> authStateChanges() {
-    return _auth.authStateChanges();
+  Stream<UserModel?> authStateChanges() {
+    return _auth
+        .authStateChanges()
+        .map((user) {
+          if (user == null) return null;
+          return getUserByUID(user.uid);
+        })
+        .asyncExpand((stream) => stream);
   }
 
   /* =========================
@@ -53,8 +59,7 @@ class AuthService {
       smsCode: smsCode,
     );
 
-    final userCredential =
-        await firebaseAuth.signInWithCredential(credential);
+    final userCredential = await firebaseAuth.signInWithCredential(credential);
 
     final user = userCredential.user;
     if (user == null) {
