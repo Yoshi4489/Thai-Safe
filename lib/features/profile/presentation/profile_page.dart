@@ -300,6 +300,31 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         if (authController.user == null) return;
 
                         List<Map<String, dynamic>> contacts = [];
+
+                        if (!PhoneValidator.isValidThaiPhone(contact_tel_controller_one.text) && contact_tel_controller_one.text.isNotEmpty) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('เบอร์โทรศัพท์ผู้ติดต่อฉุกเฉิน 1 ไม่ถูกต้อง'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                          return;
+                        }
+
+                        if (!PhoneValidator.isValidThaiPhone(contact_tel_controller_two.text) && contact_tel_controller_two.text.isNotEmpty) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('เบอร์โทรศัพท์ผู้ติดต่อฉุกเฉิน 2 ไม่ถูกต้อง'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                          return;
+                        }
+
                         if (contact_name_controller_one.text.isNotEmpty ||
                             contact_tel_controller_one.text.isNotEmpty) {
                           contacts.add({
