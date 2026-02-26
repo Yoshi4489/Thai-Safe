@@ -17,25 +17,18 @@ class MedicalProfileService {
     }
   }
 
-
   /* ---------------------------
-   *  CREATE MEDICAL PROFILE
+   * CREATE MEDICAL PROFILE
    * --------------------------- */
-  Future<void> createMedicalProfile(String userUID) async {
-    final existing = await medicalCollection
-        .where("user_id", isEqualTo: userUID)
-        .limit(1)
-        .get();
+  Future<MedicalProfileModel> createMedicalProfile(String userUID) async {
+    final docRef = medicalCollection.doc(userUID); 
+    final doc = await docRef.get();
 
-    if (existing.docs.isNotEmpty) {
-      throw Exception("User medical profile already exists");
+    if (doc.exists) {
+      return MedicalProfileModel.fromMap(doc.data()!);
     }
 
-    final docRef = medicalCollection.doc();
-    final medicalId = docRef.id;
-
     final newMedicalProfile = MedicalProfileModel(
-      id: medicalId,
       user_id: userUID,
       blood_type: "",
       chronic_diseases: "",
@@ -46,24 +39,33 @@ class MedicalProfileService {
     );
 
     await docRef.set(newMedicalProfile.toMap());
+    return newMedicalProfile;
   }
 
   /* ---------------------------
-   *  GET MEDICAL PROFILE BY UID
+   * GET MEDICAL PROFILE BY UID
    * --------------------------- */
    Stream<MedicalProfileModel> getMedicalProfileByUID(String uid) {
     return medicalCollection.doc(uid).snapshots().map((doc) {
       if (!doc.exists) {
-        throw Exception("Medical Profile Not Found");
+        return MedicalProfileModel(
+          user_id: uid,
+          blood_type: "",
+          chronic_diseases: "",
+          regular_medications: "",
+          allergies: "",
+          contact_list: [],
+          updated_at: DateTime.now(),
+        );
       }
       return MedicalProfileModel.fromMap(doc.data()!);
     });
    }
 
   /* ------------------------------
-   *  UPDATE MEDICAL PROFILE
+   * UPDATE MEDICAL PROFILE
    * ------------------------------ */
    Future<void> updateMedicalProfile(String uid, Map<String, dynamic> data) {
-    return medicalCollection.doc(uid).update(data);
+    return medicalCollection.doc(uid).set(data, SetOptions(merge: true));
    }
 }
