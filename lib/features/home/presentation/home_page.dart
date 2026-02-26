@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
+import 'package:thai_safe/features/maps_alert/presentation/pages/report_incident_page.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -97,8 +98,9 @@ class HomePage extends ConsumerWidget {
               ],
             ),
             child: GestureDetector(
-              onTap: () async {
-                await ref.watch(authControllerProvider.notifier).logout();
+              onTap: () {
+                // Handle SOS button tap
+                Navigator.push(ref.context, MaterialPageRoute(builder: (context) => const ReportIncidentPage()));
               },
               child: const Center(
                 child: Text(
