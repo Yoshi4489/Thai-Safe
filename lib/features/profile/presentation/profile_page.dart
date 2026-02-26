@@ -15,11 +15,14 @@ class ProfilePage extends ConsumerStatefulWidget {
 class _ProfilePageState extends ConsumerState<ProfilePage> {
   File? _imageFile;
   String? _selectedBloodType;
-  String? chronic_diseases;
-  String? regular_medications;
-  String? allergies;
-  Map<String, String>? contact_list;
-
+  final TextEditingController chronic_diseases_controller = TextEditingController();
+  final TextEditingController regular_medications_controller = TextEditingController();
+  final TextEditingController allergies_controller = TextEditingController();
+  final TextEditingController contact_name_controller_one = TextEditingController();
+  final TextEditingController contact_tel_controller_one = TextEditingController();
+  final TextEditingController contact_name_controller_two = TextEditingController();
+  final TextEditingController contact_tel_controller_two = TextEditingController();
+  
   Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
     final XFile? pickedFile = await picker.pickImage(source: source);
@@ -29,11 +32,28 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         };
     });
   }
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    chronic_diseases_controller.dispose();
+    regular_medications_controller.dispose();
+    allergies_controller.dispose();
+    contact_name_controller_one.dispose();
+    contact_tel_controller_one.dispose();
+    contact_name_controller_two.dispose();
+    contact_tel_controller_two.dispose();
+    super.dispose();
+  }
   
   @override
-  Widget build(BuildContext) {
-    final _cloudProvider = ref.watch(cloudinaryServiceProvider);
-    final _authController = ref.watch(authControllerProvider);
+  Widget build(BuildContext context) {
+    final cloudProvider = ref.watch(cloudinaryServiceProvider);
+    final authController = ref.watch(authControllerProvider);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -56,7 +76,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   onTap: () async {
                     await _pickImage(ImageSource.camera);
                     if (_imageFile != null) {
-                      final res = await _cloudProvider.uploadImage(_imageFile!);
+                      final res = await cloudProvider.uploadImage(_imageFile!);
                       if (res.isNotEmpty) {
                         ref.read(authControllerProvider.notifier).updateProfile(profile_url: res);
                       }
@@ -67,10 +87,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       CircleAvatar(
                         radius: 40,
                         backgroundImage:
-                            _authController.user?.profile_url != null
-                            ? NetworkImage(_authController.user!.profile_url)
+                            authController.user?.profile_url != null
+                            ? NetworkImage(authController.user!.profile_url)
                             : null,
-                        child: _authController.user?.profile_url == null
+                        child: authController.user?.profile_url == null
                             ? const Icon(Icons.person, size: 40)
                             : null,
                       ),
@@ -99,14 +119,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "${_authController.user?.firstName ?? "ชื่อจริง"} ${_authController.user?.lastName ?? "นามสกล"}",
+                        "${authController.user?.firstName ?? "ชื่อจริง"} ${authController.user?.lastName ?? "นามสกล"}",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       SizedBox(height: 4),
-                      Text(PhoneValidator.convertToNormalPhone(_authController.user?.tel ?? "")),
+                      Text(PhoneValidator.convertToNormalPhone(authController.user?.tel ?? "")),
                     ],
                   ),
                 ),
@@ -125,6 +145,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             const SizedBox(height: 16),
 
             _medicalTextField(
+              controller: chronic_diseases_controller,
               icon: Icons.health_and_safety_outlined,
               label: "โรคประจำตัว",
               hint: "เช่น เบาหวาน, ความดัน, หอบหืด",
@@ -133,6 +154,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             const SizedBox(height: 16),
 
             _medicalTextField(
+              controller: regular_medications_controller,
               icon: Icons.medication_outlined,
               label: "ยาประจำ",
               hint: "เช่น Insulin, Ventolin",
@@ -142,6 +164,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
             _medicalTextField(
               icon: Icons.warning_amber_rounded,
+              controller: allergies_controller,
               label: "อาการแพ้ยา / แพ้อาหาร",
               hint: "เช่น แพ้เพนนิซิลลิน, อาหารทะเล",
             ),
@@ -152,6 +175,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
             _medicalTextField(
               icon: Icons.person_outline,
+              controller: contact_name_controller_one,
               label: "ชื่อผู้ติดต่อ",
               hint: "ชื่อ – นามสกุล",
             ),
@@ -160,6 +184,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
             _medicalTextField(
               icon: Icons.phone_outlined,
+              controller: contact_tel_controller_one,
               label: "เบอร์โทรศัพท์",
               hint: "0xx-xxx-xxxx",
             ),
@@ -168,6 +193,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
             _medicalTextField(
               icon: Icons.person_outline,
+              controller: contact_name_controller_two,
               label: "ชื่อผู้ติดต่อ",
               hint: "ชื่อ – นามสกุล",
             ),
@@ -176,6 +202,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
             _medicalTextField(
               icon: Icons.phone_outlined,
+              controller: contact_tel_controller_two,
               label: "เบอร์โทรศัพท์",
               hint: "0xx-xxx-xxxx",
             ),
@@ -263,6 +290,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     required IconData icon,
     required String label,
     required String hint,
+    required TextEditingController controller,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,6 +298,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 6),
         TextField(
+          controller: controller,
           maxLines: null,
           decoration: InputDecoration(
             prefixIcon: Icon(icon),
