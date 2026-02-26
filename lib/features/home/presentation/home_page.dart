@@ -1,10 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/report_incident_page.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
+
+  Future<Position> _getCurrentLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error("Location services disable.");
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error("Location permission denied");
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+        "Location permissions are permanently denied, we can't request permission"
+      );
+    }
+
+    return await Geolocator.getCurrentPosition();
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -80,28 +104,30 @@ class HomePage extends ConsumerWidget {
   }
 
   Widget _sosButton(WidgetRef ref) {
-    return Center(
-      child: Column(
-        children: [
-          Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.red.withOpacity(0.4),
-                  blurRadius: 20,
-                  spreadRadius: 5,
-                ),
-              ],
-            ),
-            child: GestureDetector(
-              onTap: () {
-                // Handle SOS button tap
-                Navigator.push(ref.context, MaterialPageRoute(builder: (context) => const ReportIncidentPage()));
-              },
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          ref.context,
+          MaterialPageRoute(builder: (context) => const ReportIncidentPage())
+        );
+      },
+      child: Center(
+        child: Column(
+          children: [
+            Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withOpacity(0.4),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
               child: const Center(
                 child: Text(
                   "SOS",
@@ -113,13 +139,13 @@ class HomePage extends ConsumerWidget {
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            "กดเพื่อขอความช่วยเหลือทันที",
-            style: TextStyle(color: Colors.grey),
-          )
-        ],
+            const SizedBox(height: 12),
+            const Text(
+              "กดเพื่อขอความช่วยเหลือทันที",
+              style: TextStyle(color: Colors.grey),
+            )
+          ],
+        ),
       ),
     );
   }
