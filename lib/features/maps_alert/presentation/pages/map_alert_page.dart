@@ -22,6 +22,7 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
   final Completer<GoogleMapController> _controller = Completer();
 
   Position? _currentPosition;
+  
   StreamSubscription<Position>? _positionStream;
   bool _isLoadingLocation = true;
 
@@ -38,9 +39,6 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
   }
 
   Future<void> _moveCameraToUser(Position position) async {
-    // 🚨 Remove the 'if (!_controller.isCompleted) return;' line completely.
-
-    // This will safely wait until the map is actually ready, then move it.
     final controller = await _controller.future;
     controller.animateCamera(
       CameraUpdate.newCameraPosition(
@@ -57,7 +55,6 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // 1. ตรวจสอบว่าเปิด GPS ที่ตัวเครื่องหรือยัง
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       // ถ้าปิด GPS ไว้ ให้หยุดการทำงาน
@@ -119,17 +116,7 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
   Future<void> _goToCurrentLocation() async {
     final GoogleMapController controller = await _controller.future;
     if (_currentPosition != null) {
-      controller.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: LatLng(
-              _currentPosition!.latitude,
-              _currentPosition!.longitude,
-            ),
-            zoom: 15.0,
-          ),
-        ),
-      );
+      _moveCameraToUser(_currentPosition!);
     } else {
       _initLocationTracking();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -245,9 +232,14 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
           GoogleMap(
             mapType: MapType.normal,
             initialCameraPosition: CameraPosition(
-              target: LatLng(
-                _currentPosition?.latitude ?? 13.7649,
-                _currentPosition?.longitude ?? 100.5383,
+              target: 
+              _currentPosition != null
+              ? LatLng(
+                _currentPosition!.latitude,
+                _currentPosition!.longitude,
+              )
+              : LatLng(
+                13.7649, 100.5383
               ),
               zoom: 14.4746,
             ),

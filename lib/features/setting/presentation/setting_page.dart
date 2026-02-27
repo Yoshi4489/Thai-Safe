@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 
-class SettingPage extends StatelessWidget {
+class SettingPage extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Center(
-      child: Text("Setting"),
+      child: ElevatedButton(onPressed: () async{
+        await ref.read(authControllerProvider.notifier).logout();
+      }, child: Text("Log Out")),
     );
   }
 }
