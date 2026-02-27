@@ -4,34 +4,22 @@ import 'package:geolocator/geolocator.dart';
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/report_incident_page.dart';
 
-class HomePage extends ConsumerWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
+  @override
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
 
-  Future<Position> _getCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error("Location services disable.");
-    }
+class _HomePageState extends ConsumerState<HomePage> {
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error("Location permission denied");
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-        "Location permissions are permanently denied, we can't request permission"
-      );
-    }
-
-    return await Geolocator.getCurrentPosition();
+  @override
+  void initState() {
+    super.initState();
+    
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user;
     return Scaffold(
       appBar: AppBar(

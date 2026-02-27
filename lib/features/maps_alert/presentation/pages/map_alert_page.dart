@@ -4,12 +4,12 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
-// Import หน้าแจ้งเหตุ 
-import 'report_incident_page.dart'; 
+// Import หน้าแจ้งเหตุ
+import 'report_incident_page.dart';
 
 // Import Controllers
-import 'package:thai_safe/features/incidents/controllers/incident_controller.dart'; 
-import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart'; 
+import 'package:thai_safe/features/incidents/controllers/incident_controller.dart';
+import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 
 class MapAlertPage extends ConsumerStatefulWidget {
   const MapAlertPage({super.key});
@@ -20,15 +20,10 @@ class MapAlertPage extends ConsumerStatefulWidget {
 
 class _MapAlertPageState extends ConsumerState<MapAlertPage> {
   final Completer<GoogleMapController> _controller = Completer();
-  
-  // ตำแหน่งเริ่มต้น (อนุสาวรีย์ชัยฯ)
-  static const CameraPosition _kBangkok = CameraPosition(
-    target: LatLng(13.7649, 100.5383),
-    zoom: 14.4746,
-  );
 
   Position? _currentPosition;
   StreamSubscription<Position>? _positionStream;
+  bool _isLoadingLocation = true;
 
   @override
   void initState() {
@@ -38,41 +33,86 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
 
   @override
   void dispose() {
-    _positionStream?.cancel(); 
+    _positionStream?.cancel();
     super.dispose();
+  }
+
+  Future<void> _moveCameraToUser(Position position) async {
+    // 🚨 Remove the 'if (!_controller.isCompleted) return;' line completely.
+
+    // This will safely wait until the map is actually ready, then move it.
+    final controller = await _controller.future;
+    controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(position.latitude, position.longitude),
+          zoom: 15,
+        ),
+      ),
+    );
   }
 
   // ฟังก์ชันขอสิทธิ์และเริ่มติดตามตำแหน่งแบบ Real-time
   Future<void> _initLocationTracking() async {
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // 1. ตรวจสอบว่าเปิด GPS ที่ตัวเครื่องหรือยัง
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      // ถ้าปิด GPS ไว้ ให้หยุดการทำงาน
+      setState(() => _isLoadingLocation = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('กรุณาเปิด GPS (Location Services) บนอุปกรณ์ของคุณ'),
+          ),
+        );
+      }
+      return;
     }
 
-    if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-      try {
-        Position initPos = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 5), // เผื่อไว้กันค้าง
-        );
-        if (mounted) {
-          setState(() => _currentPosition = initPos);
-        }
-      } catch (e) {
-        debugPrint("หาตำแหน่งเริ่มต้นไม่เจอ: $e");
+    // 2. ตรวจสอบสิทธิ์การเข้าถึงตำแหน่ง
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // ถ้าผู้ใช้ปฏิเสธสิทธิ์
+        setState(() => _isLoadingLocation = false);
+        return;
       }
+    }
 
-      _positionStream = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10, 
-        ),
-      ).listen((Position position) {
-        if (mounted) {
-          setState(() => _currentPosition = position);
-        }
+    if (permission == LocationPermission.deniedForever) {
+      // ถ้าผู้ใช้ปฏิเสธสิทธิ์ถาวร ต้องไปเปิดใน Settings ของเครื่อง
+      setState(() => _isLoadingLocation = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('สิทธิ์ถูกปฏิเสธถาวร กรุณาอนุญาตในตั้งค่าของแอป'),
+          ),
+        );
+      }
+      return;
+    }
+
+    // 3. ดึงตำแหน่งปัจจุบัน
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _currentPosition = pos;
+        _isLoadingLocation = false;
       });
+
+      _moveCameraToUser(pos);
+    } catch (e) {
+      setState(() => _isLoadingLocation = false);
+      debugPrint("Error getting location: $e");
     }
   }
 
@@ -82,13 +122,16 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
       controller.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
-            target: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+            target: LatLng(
+              _currentPosition!.latitude,
+              _currentPosition!.longitude,
+            ),
             zoom: 15.0,
           ),
         ),
       );
     } else {
-      _initLocationTracking(); 
+      _initLocationTracking();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('กำลังค้นหาตำแหน่ง GPS ของคุณ...')),
       );
@@ -98,13 +141,13 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     final incidentState = ref.watch(incidentControllerProvider);
     final incidents = incidentState.incidents;
 
     final authState = ref.watch(authControllerProvider);
     final currentUser = authState.user;
-    
+
     String displayFullName = 'ไม่ระบุชื่อ';
     if (currentUser != null) {
       final firstName = currentUser.firstName ?? '';
@@ -113,23 +156,24 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
         displayFullName = '$firstName $lastName'.trim();
       }
     }
-    
-    final displayPhone = currentUser?.tel ?? authState.phoneNumber ?? 'ไม่มีเบอร์โทรศัพท์';
+
+    final displayPhone =
+        currentUser?.tel ?? authState.phoneNumber ?? 'ไม่มีเบอร์โทรศัพท์';
 
     // =========================================================
     // 2. คำนวณสถานะความปลอดภัย (รอ GPS ก่อนคำนวณ)
     // =========================================================
-    int userStatus = 1; 
+    int userStatus = 1;
     double alertRadius = 5000; // รัศมีเริ่มต้น 5 กม. กางตลอดเวลาที่มี GPS
-    
+
     if (_currentPosition != null && incidents.isNotEmpty) {
       double minDistance = double.infinity;
-      
+
       for (var incident in incidents) {
         double distance = Geolocator.distanceBetween(
-          _currentPosition!.latitude, 
+          _currentPosition!.latitude,
           _currentPosition!.longitude,
-          incident.latitude, 
+          incident.latitude,
           incident.longitude,
         );
         if (distance < minDistance) minDistance = distance;
@@ -145,8 +189,8 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
     }
 
     String statusText = 'ปกติ (ปลอดภัย)';
-    Color statusColor = Colors.green; 
-    
+    Color statusColor = Colors.green;
+
     if (userStatus == 3) {
       statusText = 'ประสบภัย (ใกล้ตัวมาก)';
       statusColor = Colors.red;
@@ -159,16 +203,18 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
     // 3. เตรียม Marker และ Circle
     // =========================================================
     final Set<Marker> realMarkers = incidents.map((incident) {
-      double hue = (incident.type == 'flood') ? BitmapDescriptor.hueAzure 
-                 : (incident.urgency == 'ถึงแก่ชีวิต') ? BitmapDescriptor.hueRed 
-                 : BitmapDescriptor.hueOrange;
+      double hue = (incident.type == 'flood')
+          ? BitmapDescriptor.hueAzure
+          : (incident.urgency == 'ถึงแก่ชีวิต')
+          ? BitmapDescriptor.hueRed
+          : BitmapDescriptor.hueOrange;
 
       return Marker(
         markerId: MarkerId(incident.id),
         position: LatLng(incident.latitude, incident.longitude),
         infoWindow: InfoWindow(
-          title: incident.title, 
-          snippet: '${incident.type} | ${incident.urgency}'
+          title: incident.title,
+          snippet: '${incident.type} | ${incident.urgency}',
         ),
         icon: BitmapDescriptor.defaultMarkerWithHue(hue),
       );
@@ -180,12 +226,15 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
       alertCircles.add(
         Circle(
           circleId: const CircleId('user_alert_zone'),
-          center: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-          radius: alertRadius, 
-          fillColor: statusColor.withOpacity(0.15), 
+          center: LatLng(
+            _currentPosition!.latitude,
+            _currentPosition!.longitude,
+          ),
+          radius: alertRadius,
+          fillColor: statusColor.withOpacity(0.15),
           strokeColor: statusColor,
           strokeWidth: 2,
-        )
+        ),
       );
     }
 
@@ -195,20 +244,31 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
           // --- Layer 1: Map ---
           GoogleMap(
             mapType: MapType.normal,
-            initialCameraPosition: _kBangkok,
-            markers: realMarkers, 
-            circles: alertCircles, 
+            initialCameraPosition: CameraPosition(
+              target: LatLng(
+                _currentPosition?.latitude ?? 13.7649,
+                _currentPosition?.longitude ?? 100.5383,
+              ),
+              zoom: 14.4746,
+            ),
+            markers: realMarkers,
+            circles: alertCircles,
             onMapCreated: (GoogleMapController controller) {
-              _controller.complete(controller);
+              // Add this safety check
+              if (!_controller.isCompleted) {
+                _controller.complete(controller);
+              }
             },
-            myLocationEnabled: true,      
-            myLocationButtonEnabled: false, 
-            zoomControlsEnabled: true, 
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: true,
           ),
 
           // --- Layer 2: Gradient ---
           Positioned(
-            top: 0, left: 0, right: 0,
+            top: 0,
+            left: 0,
+            right: 0,
             child: IgnorePointer(
               child: Container(
                 height: 150,
@@ -217,8 +277,8 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.white.withOpacity(0.9), 
-                      Colors.white.withOpacity(0.0)
+                      Colors.white.withOpacity(0.9),
+                      Colors.white.withOpacity(0.0),
                     ],
                   ),
                 ),
@@ -236,7 +296,11 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: const [
-                  BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
                 ],
               ),
               child: Row(
@@ -252,16 +316,23 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        displayFullName, 
-                        style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)
+                        displayFullName,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
-                        displayPhone, 
-                        style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey.shade700)
+                        displayPhone,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.grey.shade700,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: statusColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
@@ -288,19 +359,23 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
             bottom: 30,
             left: 20,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 24.0), 
+              padding: const EdgeInsets.only(bottom: 24.0),
               child: FloatingActionButton.extended(
                 heroTag: 'report_btn',
                 onPressed: () {
                   // ส่งพิกัดปัจจุบันไป หรือใช้อนุสาวรีย์ฯ ถ้ายังหาไม่เจอ
                   LatLng currentPos = const LatLng(13.7649, 100.5383);
                   if (_currentPosition != null) {
-                    currentPos = LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
+                    currentPos = LatLng(
+                      _currentPosition!.latitude,
+                      _currentPosition!.longitude,
+                    );
                   }
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ReportIncidentPage(currentLocation: currentPos),
+                      builder: (context) =>
+                          ReportIncidentPage(currentLocation: currentPos),
                     ),
                   );
                 },
@@ -320,21 +395,19 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
 
           // --- Layer 5: ปุ่ม GPS ---
           Positioned(
-            bottom: 110, 
+            bottom: 110,
             right: 12,
             child: FloatingActionButton(
-              mini: true, 
+              mini: true,
               heroTag: 'gps_btn',
               onPressed: _goToCurrentLocation,
               backgroundColor: Colors.white,
               child: Icon(Icons.my_location, color: theme.colorScheme.primary),
             ),
           ),
-          
+
           if (incidentState.isLoading || authState.isLoading)
-             const Center(
-               child: CircularProgressIndicator(),
-             ),
+            const Center(child: CircularProgressIndicator()),
         ],
       ),
     );

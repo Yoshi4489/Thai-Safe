@@ -11,6 +11,7 @@ class IncidentModel {
   final Map<String, dynamic> details;
   final double latitude;
   final double longitude;
+  final String geohash;
   final String status;
   final String urgency;
   final DateTime createdAt;
@@ -26,6 +27,7 @@ class IncidentModel {
     required this.details,
     required this.latitude,
     required this.longitude,
+    required this.geohash,
     required this.status,
     required this.urgency,
     required this.createdAt,
@@ -44,6 +46,7 @@ class IncidentModel {
       'description': jsonEncode(details), 
       'latitude': latitude,
       'longitude': longitude,
+      'geohash': geohash,
       'status': status,
       'urgency': urgency,
       'created_at': Timestamp.fromDate(createdAt), 
@@ -72,6 +75,7 @@ class IncidentModel {
       details: parsedDetails,
       latitude: (map['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (map['longitude'] as num?)?.toDouble() ?? 0.0,
+      geohash: map['geohash'] ?? '',
       status: map['status'] ?? 'Pending',
       urgency: map['urgency'] ?? 'ทั่วไป',
       createdAt: (map['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),

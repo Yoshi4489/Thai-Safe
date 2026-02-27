@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:geoflutterfire2/geoflutterfire2.dart';
 import 'package:uuid/uuid.dart';
 
 // Import Model และ Service 
@@ -69,6 +70,8 @@ class IncidentController extends StateNotifier<IncidentState> {
 
     try {
       final newId = const Uuid().v4();
+      final geo = GeoFlutterFire();
+      final point = geo.point(latitude: lat, longitude: lng);
 
       final incident = IncidentModel(
         id: newId,
@@ -80,6 +83,7 @@ class IncidentController extends StateNotifier<IncidentState> {
         details: details,
         latitude: lat,
         longitude: lng,
+        geohash: point.hash,
         status: 'Pending',
         urgency: urgency,
         createdAt: DateTime.now(),
