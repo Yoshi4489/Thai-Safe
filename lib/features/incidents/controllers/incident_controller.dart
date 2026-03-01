@@ -69,7 +69,7 @@ class IncidentController extends StateNotifier<IncidentState> {
     required String urgency,
     required double lat,
     required double lng,
-    required File? imageFile,
+    required List<String>? imageUrls,
     required String userId,      
     required String reporterName, 
     required String reporterTel,  
@@ -96,11 +96,11 @@ class IncidentController extends StateNotifier<IncidentState> {
         status: 'Pending',
         urgency: urgency,
         createdAt: DateTime.now(),
-        imageUrls: [], 
+        imageUrls: imageUrls ?? [],
       );
 
       // ส่งไป Service เพื่อบันทึกลง Database
-      await _service.createIncident(incident: incident, imageFile: imageFile);
+      await _service.createIncident(incident);
 
       if (mounted) {
         state = state.copyWith(isLoading: false);
