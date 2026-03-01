@@ -7,6 +7,9 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:thai_safe/core/services/cloudinary_provider.dart';
 
+// Maps Search Bar
+import 'package:geocoding/geocoding.dart' as geo;
+
 import 'package:thai_safe/features/authentication/presentation/signup_phone_page.dart';
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 import 'package:thai_safe/features/incidents/controllers/incident_controller.dart';
@@ -25,6 +28,9 @@ class ReportIncidentPage extends ConsumerStatefulWidget {
 
 class _ReportIncidentPageState extends ConsumerState<ReportIncidentPage> {
   final _formKey = GlobalKey<FormState>();
+
+  // Maps Search Bar
+  final TextEditingController _searchController = TextEditingController();
 
   String? _selectedCategory;
   File? _imageFile;
@@ -146,6 +152,37 @@ class _ReportIncidentPageState extends ConsumerState<ReportIncidentPage> {
     _mapController?.dispose();
     super.dispose();
   }
+
+Future<void> _searchLocation() async {
+  String address = _searchController.text.trim();
+  if (address.isEmpty) return;
+
+  try {
+    // 2. ใช้ geo.locationFromAddress เพื่อระบุว่าใช้ของแพ็กเกจ geocoding
+    List<geo.Location> locations = await geo.locationFromAddress(address);
+
+    if (locations.isNotEmpty) {
+      geo.Location first = locations.first; // 3. ใช้ geo.Location
+      LatLng newPos = LatLng(first.latitude, first.longitude);
+
+      setState(() {
+        _selectedLocation = newPos;
+      });
+
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: newPos, zoom: 16),
+        ),
+      );
+      FocusScope.of(context).unfocus();
+    }
+  } catch (e) {
+    print("Geocoding Error: $e"); // ดู Error ใน Console ว่าฟ้องว่าอะไร
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('ไม่พบสถานที่: $address')),
+    );
+  }
+}
 
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -966,148 +1003,66 @@ class _ReportIncidentPageState extends ConsumerState<ReportIncidentPage> {
     );
   }
 
-  Widget _buildMap() => SizedBox(
-    height: 180,
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: _selectedLocation,
-          zoom: 15,
-        ),
-        onMapCreated: (c) => _mapController = c,
-        onTap: (pos) => setState(() => _selectedLocation = pos),
-        markers: {
-          Marker(
-            markerId: const MarkerId('m'),
-            position: _selectedLocation,
-            draggable: true,
+Widget _buildMap() {
+  return Column(
+    children: [
+      TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'ค้นหาชื่อหมู่บ้าน, ถนน หรือสถานที่...',
+          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.send, color: Colors.blueAccent), // ปุ่มกดค้นหา
+            onPressed: _searchLocation,
           ),
-        },
-      ),
-    ),
-  );
-  Widget _buildCategoryGrid() => GridView.builder(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: 3,
-      crossAxisSpacing: 8,
-      mainAxisSpacing: 8,
-    ),
-    itemCount: _categories.length,
-    itemBuilder: (context, i) {
-      final cat = _categories[i];
-      final isSel = _selectedCategory == cat['id'];
-      return InkWell(
-        onTap: () => setState(() {
-          _selectedCategory = cat['id'];
-          _urgency = 'รอได้';
-        }),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isSel ? cat['color'].withOpacity(0.1) : Colors.white,
-            border: Border.all(
-              color: isSel ? cat['color'] : Colors.grey.shade300,
-              width: isSel ? 2 : 1,
-            ),
+          filled: true,
+          fillColor: Colors.grey.shade100,
+          border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(cat['icon'], color: isSel ? cat['color'] : Colors.grey),
-              const SizedBox(height: 4),
-              Text(
-                cat['label'],
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        ),
+        onSubmitted: (_) => _searchLocation(), // กด Enter ที่คีย์บอร์ดเพื่อค้นหา
+      ),
+      const SizedBox(height: 10),
+      
+      // แผนที่
+      SizedBox(
+        height: 200,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: GoogleMap(
+            initialCameraPosition: CameraPosition(target: _selectedLocation, zoom: 15),
+            onMapCreated: (c) => _mapController = c,
+            onTap: (pos) => setState(() => _selectedLocation = pos),
+            markers: {
+              Marker(
+                markerId: const MarkerId('m'),
+                position: _selectedLocation,
+                draggable: true,
+                onDragEnd: (newPos) => setState(() => _selectedLocation = newPos),
+              )
+            },
           ),
         ),
-      );
-    },
-  );
-  Widget _buildImagePicker() => GestureDetector(
-    onTap: () {
-      _showImageSourceSheet();
-    },
-    child: Container(
-      width: double.infinity,
-      constraints: const BoxConstraints(
-        minHeight: 150
       ),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: _imageFile == null
-          ? const Icon(Icons.add_a_photo, color: Colors.grey)
-          : ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.file(_imageFile!, fit: BoxFit.cover),
-            ),
-    ),
+    ],
   );
-  void _showImageSourceSheet() => showModalBottomSheet(
-    context: context,
-    builder: (c) => SafeArea(
-      child: Wrap(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.camera_alt),
-            title: const Text('ถ่ายรูป'),
-            onTap: () {
-              Navigator.pop(c);
-              _pickImage(ImageSource.camera);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.photo_library),
-            title: const Text('อัลบั้ม'),
-            onTap: () {
-              Navigator.pop(c);
-              _pickImage(ImageSource.gallery);
-            },
-          ),
-        ],
-      ),
-    ),
-  );
+}
 
-  Future<void> _pickImage(ImageSource s) async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: s,);
-    if (picked != null) {
-      setState(() => _imageFile = File(picked.path));
-    }
-  }
-
-  Widget _buildSubmitButton() => SizedBox(
-    width: double.infinity,
-    height: 56,
-    child: ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: _urgency == 'ถึงแก่ชีวิต'
-            ? Colors.red
-            : (_urgency == 'ด่วนมาก' ? Colors.orange : Colors.blueAccent),
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      onPressed: _selectedCategory == null ? null : _submitReport,
-      child: Text(
-        _urgency == 'ถึงแก่ชีวิต'
-            ? 'แจ้งเหตุด่วนถึงแก่ชีวิตทันที!'
-            : 'ส่งแจ้งเหตุสถานการณ์',
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-      ),
-    ),
-  );
+  Widget _buildCategoryGrid() => GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8), itemCount: _categories.length, itemBuilder: (context, i) {
+    final cat = _categories[i];
+    final isSel = _selectedCategory == cat['id'];
+    return InkWell(
+      onTap: () => setState(() { _selectedCategory = cat['id']; _urgency = 'รอได้'; }), 
+      child: Container(decoration: BoxDecoration(color: isSel ? cat['color'].withOpacity(0.1) : Colors.white, border: Border.all(color: isSel ? cat['color'] : Colors.grey.shade300, width: isSel ? 2 : 1), borderRadius: BorderRadius.circular(12)), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(cat['icon'], color: isSel ? cat['color'] : Colors.grey), const SizedBox(height: 4), Text(cat['label'], style: TextStyle(fontSize: 11, fontWeight: isSel ? FontWeight.bold : FontWeight.normal), textAlign: TextAlign.center)]))
+    );
+  });
+  Widget _buildImagePicker() => GestureDetector(onTap: () => _showImageSourceSheet(), child: Container(height: 120, width: double.infinity, decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.grey.shade300)), child: _imageFile == null ? const Icon(Icons.add_a_photo, color: Colors.grey) : ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.file(_imageFile!, fit: BoxFit.cover))));
+  void _showImageSourceSheet() => showModalBottomSheet(context: context, builder: (c) => SafeArea(child: Wrap(children: [ListTile(leading: const Icon(Icons.camera_alt), title: const Text('ถ่ายรูป'), onTap: () { Navigator.pop(c); _pickImage(ImageSource.camera); }), ListTile(leading: const Icon(Icons.photo_library), title: const Text('อัลบั้ม'), onTap: () { Navigator.pop(c); _pickImage(ImageSource.gallery); })])));
+  Future<void> _pickImage(ImageSource s) async { final xFile = await _picker.pickImage(source: s, imageQuality: 50); if (xFile != null) setState(() => _imageFile = File(xFile.path)); }
+  Widget _buildSubmitButton() => SizedBox(width: double.infinity, height: 56, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: _urgency == 'ถึงแก่ชีวิต' ? Colors.red : (_urgency == 'ด่วนมาก' ? Colors.orange : Colors.blueAccent), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), onPressed: _selectedCategory == null ? null : _submitReport, child: Text(_urgency == 'ถึงแก่ชีวิต' ? 'แจ้งเหตุด่วนถึงแก่ชีวิตทันที!' : 'ส่งแจ้งเหตุสถานการณ์', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))));
 
   // ==========================================
   // LOGIC ส่งข้อมูล

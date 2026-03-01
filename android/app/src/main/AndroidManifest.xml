@@ -3,6 +3,7 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="thai_safe"
         android:name="${applicationName}"
@@ -12,6 +13,8 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}"
         />
+
+        <uses-library android:name="org.apache.http.legacy" android:required="false" />
 
         <activity
             android:name=".MainActivity"
@@ -44,8 +47,9 @@
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
-
+         
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+         
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
