@@ -12,31 +12,53 @@ class AuthGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authAsync = ref.watch(authStateProvider);
+    
     return authAsync.when(
       loading: () => const BootLoadingPage(),
-      error: (e, stack) => Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('เกิดข้อผิดพลาดในการตรวจสอบบัญชี'),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.refresh(authStateProvider),
-                child: Text('ลองใหม่'),
+      error: (e, stack) {
+        // 1. ปริ้นท์ Error ลงใน Debug Console
+        debugPrint('🔥 Auth Error: $e');
+        debugPrint('🔥 Stack trace: $stack');
+
+        return Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0), // เพิ่ม Padding ไม่ให้ตัวหนังสือชิดขอบจอเกินไป
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'เกิดข้อผิดพลาดในการตรวจสอบบัญชี',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // 2. แสดง Error บนหน้าจอ (สีแดง)
+                  Text(
+                    'รายละเอียด: $e',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () => ref.refresh(authStateProvider),
+                    child: const Text('ลองใหม่'),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
       data: (user) {
         if (user == null) {
-          return WelcomePage();
+          return const WelcomePage();
         }
         if (user.firstLogin == true) {
-          return SignupProfilePage();
+          return const SignupProfilePage();
         }
-        return AppShell();
+        return const AppShell();
       },
     );
   }

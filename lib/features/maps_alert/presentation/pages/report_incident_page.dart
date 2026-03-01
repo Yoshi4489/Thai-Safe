@@ -6,6 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 
+// Maps Search Bar
+import 'package:geocoding/geocoding.dart' as geo;
+
 import 'package:thai_safe/features/authentication/presentation/signup_phone_page.dart'; 
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart'; 
 import 'package:thai_safe/features/incidents/controllers/incident_controller.dart'; 
@@ -24,6 +27,9 @@ class ReportIncidentPage extends ConsumerStatefulWidget {
 
 class _ReportIncidentPageState extends ConsumerState<ReportIncidentPage> {
   final _formKey = GlobalKey<FormState>();
+
+  // Maps Search Bar
+  final TextEditingController _searchController = TextEditingController();
 
   String? _selectedCategory;
   File? _imageFile;
@@ -129,6 +135,37 @@ class _ReportIncidentPageState extends ConsumerState<ReportIncidentPage> {
     _mapController?.dispose();
     super.dispose();
   }
+
+Future<void> _searchLocation() async {
+  String address = _searchController.text.trim();
+  if (address.isEmpty) return;
+
+  try {
+    // 2. ใช้ geo.locationFromAddress เพื่อระบุว่าใช้ของแพ็กเกจ geocoding
+    List<geo.Location> locations = await geo.locationFromAddress(address);
+
+    if (locations.isNotEmpty) {
+      geo.Location first = locations.first; // 3. ใช้ geo.Location
+      LatLng newPos = LatLng(first.latitude, first.longitude);
+
+      setState(() {
+        _selectedLocation = newPos;
+      });
+
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: newPos, zoom: 16),
+        ),
+      );
+      FocusScope.of(context).unfocus();
+    }
+  } catch (e) {
+    print("Geocoding Error: $e"); // ดู Error ใน Console ว่าฟ้องว่าอะไร
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('ไม่พบสถานที่: $address')),
+    );
+  }
+}
 
   Future<void> _getCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -487,7 +524,54 @@ class _ReportIncidentPageState extends ConsumerState<ReportIncidentPage> {
     );
   }
 
-  Widget _buildMap() => SizedBox(height: 180, child: ClipRRect(borderRadius: BorderRadius.circular(12), child: GoogleMap(initialCameraPosition: CameraPosition(target: _selectedLocation, zoom: 15), onMapCreated: (c) => _mapController = c, onTap: (pos) => setState(() => _selectedLocation = pos), markers: {Marker(markerId: const MarkerId('m'), position: _selectedLocation, draggable: true)})));
+Widget _buildMap() {
+  return Column(
+    children: [
+      TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'ค้นหาชื่อหมู่บ้าน, ถนน หรือสถานที่...',
+          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.send, color: Colors.blueAccent), // ปุ่มกดค้นหา
+            onPressed: _searchLocation,
+          ),
+          filled: true,
+          fillColor: Colors.grey.shade100,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        ),
+        onSubmitted: (_) => _searchLocation(), // กด Enter ที่คีย์บอร์ดเพื่อค้นหา
+      ),
+      const SizedBox(height: 10),
+      
+      // แผนที่
+      SizedBox(
+        height: 200,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: GoogleMap(
+            initialCameraPosition: CameraPosition(target: _selectedLocation, zoom: 15),
+            onMapCreated: (c) => _mapController = c,
+            onTap: (pos) => setState(() => _selectedLocation = pos),
+            markers: {
+              Marker(
+                markerId: const MarkerId('m'),
+                position: _selectedLocation,
+                draggable: true,
+                onDragEnd: (newPos) => setState(() => _selectedLocation = newPos),
+              )
+            },
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
   Widget _buildCategoryGrid() => GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 8, mainAxisSpacing: 8), itemCount: _categories.length, itemBuilder: (context, i) {
     final cat = _categories[i];
     final isSel = _selectedCategory == cat['id'];
