@@ -42,6 +42,33 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     }
   }
 
+  void _showImageSourceActionSheet() {
+    showModalBottomSheet(
+      context: context, 
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo),
+              title: const Text("เลือกจาก Gallery"),
+              onTap: () {
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera),
+              title: const Text("ถ่ายภาพ"),
+              onTap: () {
+                _pickImage(ImageSource.camera);
+              },
+            )
+          ],
+        ),
+      )
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -146,7 +173,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               children: [
                 GestureDetector(
                   onTap: () async {
-                    await _pickImage(ImageSource.camera);
+                    _showImageSourceActionSheet();
                     if (_imageFile != null) {
                       final res = await cloudProvider.uploadImage(_imageFile!);
                       if (res.isNotEmpty && mounted) {

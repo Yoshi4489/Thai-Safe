@@ -89,7 +89,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SizedBox(height: 24),
 
             /// ⚠️ RISK AREA
-            _riskAreaBanner(),
+            if (incidentController.isRiskNearby) _riskAreaBanner(),
 
             const SizedBox(height: 24),
 

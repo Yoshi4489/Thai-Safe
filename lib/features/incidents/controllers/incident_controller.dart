@@ -14,12 +14,14 @@ class IncidentState {
   final String? error;
   final List<IncidentModel> incidents;
   final List<IncidentModel> nearbyIncidents;
+  final bool isRiskNearby;
 
   IncidentState({
     this.isLoading = false,
     this.error,
     this.incidents = const [],
     this.nearbyIncidents = const [],
+    this.isRiskNearby = false,
   });
 
   IncidentState copyWith({
@@ -27,12 +29,14 @@ class IncidentState {
     String? error,
     List<IncidentModel>? incidents,
     List<IncidentModel>? nearbyIncidents,
+    bool? isRiskNearby,
   }) {
     return IncidentState(
       isLoading: isLoading ?? this.isLoading,
       error: error, // ส่ง null มาเพื่อล้างค่า error ได้
       incidents: incidents ?? this.incidents,
       nearbyIncidents: nearbyIncidents ?? this.nearbyIncidents,
+      isRiskNearby: isRiskNearby ?? this.isRiskNearby,
     );
   }
 }
@@ -113,6 +117,13 @@ class IncidentController extends StateNotifier<IncidentState> {
       try {
         state = state.copyWith(isLoading: true);
         final nearbyIncidents = await _service.getIncidentsWithinKmRadius(userLat, userLng, radiusInKm).first;
+
+        for (var incident in nearbyIncidents) {
+          if (incident.status.toLowerCase() != 'cancelled' && incident.status.toLowerCase() != 'resolved') {
+            state = state.copyWith(isRiskNearby: true);
+            break;
+          }
+        }
         if (mounted) {
           state = state.copyWith(nearbyIncidents: nearbyIncidents, isLoading: false);
         }
