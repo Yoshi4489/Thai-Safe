@@ -509,7 +509,8 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
       }
     }
 
-    final displayPhone = currentUser?.tel ?? authState.phoneNumber ?? 'ไม่มีเบอร์โทรศัพท์';
+    final displayPhone =
+        currentUser?.tel ?? (authState.phoneNumber) ?? 'ไม่มีเบอร์โทรศัพท์';
 
     int userStatus = 1;
     double alertRadius = 2000; 

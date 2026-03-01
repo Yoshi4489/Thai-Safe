@@ -13,22 +13,30 @@ class IncidentState {
   final bool isLoading;
   final String? error;
   final List<IncidentModel> incidents;
+  final List<IncidentModel> nearbyIncidents;
+  final bool isRiskNearby;
 
   IncidentState({
     this.isLoading = false,
     this.error,
     this.incidents = const [],
+    this.nearbyIncidents = const [],
+    this.isRiskNearby = false,
   });
 
   IncidentState copyWith({
     bool? isLoading,
     String? error,
     List<IncidentModel>? incidents,
+    List<IncidentModel>? nearbyIncidents,
+    bool? isRiskNearby,
   }) {
     return IncidentState(
       isLoading: isLoading ?? this.isLoading,
       error: error, // ส่ง null มาเพื่อล้างค่า error ได้
       incidents: incidents ?? this.incidents,
+      nearbyIncidents: nearbyIncidents ?? this.nearbyIncidents,
+      isRiskNearby: isRiskNearby ?? this.isRiskNearby,
     );
   }
 }
@@ -84,6 +92,7 @@ class IncidentController extends StateNotifier<IncidentState> {
         latitude: lat,
         longitude: lng,
         geohash: point.hash,
+        geopoint: point.geoPoint,
         status: 'Pending',
         urgency: urgency,
         createdAt: DateTime.now(),
@@ -103,6 +112,29 @@ class IncidentController extends StateNotifier<IncidentState> {
       rethrow;
     }
   }
+
+    Future<void> getIncidentsNearby(double userLat, double userLng, double radiusInKm) async {
+      try {
+        state = state.copyWith(isLoading: true);
+        final nearbyIncidents = await _service.getIncidentsWithinKmRadius(userLat, userLng, radiusInKm).first;
+
+        for (var incident in nearbyIncidents) {
+          if (incident.status.toLowerCase() != 'cancelled' && incident.status.toLowerCase() != 'resolved') {
+            state = state.copyWith(isRiskNearby: true);
+            break;
+          }
+        }
+        if (mounted) {
+          state = state.copyWith(nearbyIncidents: nearbyIncidents, isLoading: false);
+        }
+      }
+      catch (e) {
+        if (mounted) {
+          state = state.copyWith(error: e.toString(), isLoading: false);
+        }
+        rethrow;
+      }
+    }
 }
 
 // --- PROVIDERS ---
