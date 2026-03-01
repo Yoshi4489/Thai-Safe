@@ -145,7 +145,7 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
     }
 
     final displayPhone =
-        currentUser?.tel ?? authState.phoneNumber ?? 'ไม่มีเบอร์โทรศัพท์';
+        currentUser?.tel ?? (authState.phoneNumber) ?? 'ไม่มีเบอร์โทรศัพท์';
 
     // =========================================================
     // 2. คำนวณสถานะความปลอดภัย (รอ GPS ก่อนคำนวณ)

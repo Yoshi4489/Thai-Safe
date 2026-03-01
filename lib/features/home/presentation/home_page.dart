@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
+import 'package:thai_safe/features/incidents/controllers/incident_controller.dart';
+import 'package:thai_safe/features/incidents/data/incident_model.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/report_incident_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -10,14 +13,50 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  Future<Position> _getUserLocation() async {
+    bool isServiceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    if (!isServiceEnabled) {
+      return Future.error("Location Services disable");
+    }
+
+    LocationPermission permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error("Location Service denied");
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error("Location denied needed to allow in setting");
+    }
+
+    return await Geolocator.getCurrentPosition();
+  }
+
+  void _initGetNearbyIncident() async {
+    Position? currentPosition = await _getUserLocation();
+    if (!currentPosition.latitude.isNaN && !currentPosition.longitude.isNaN) {
+      await ref
+          .read(incidentControllerProvider.notifier)
+          .getIncidentsNearby(
+            currentPosition.latitude,
+            currentPosition.longitude,
+            5,
+          );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    
+    _initGetNearbyIncident();
   }
 
   @override
   Widget build(BuildContext context) {
+    final incidentController = ref.watch(incidentControllerProvider);
     final user = ref.watch(authControllerProvider).user;
     return Scaffold(
       appBar: AppBar(
@@ -31,7 +70,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           Padding(
             padding: EdgeInsets.only(right: 12),
             child: Icon(Icons.notifications_none),
-          )
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -39,7 +78,6 @@ class _HomePageState extends ConsumerState<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             /// 🟦 WELCOME CARD
             _welcomeCard(),
 
@@ -55,8 +93,15 @@ class _HomePageState extends ConsumerState<HomePage> {
 
             const SizedBox(height: 24),
 
-            /// 🕘 LATEST INCIDENT
-            _latestIncident(),
+            /// NEAR INCIDENT
+            const Text(
+              "เหตุการณ์ ใกล้เคียงคุณ",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            incidentController.isLoading
+                ? Center(child: CircularProgressIndicator())
+                : _nearIncident(incidentController.nearbyIncidents),
 
             const SizedBox(height: 24),
           ],
@@ -83,7 +128,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               "คุณอยู่ในระบบ ThaiSafe\nพร้อมช่วยเหลือคุณตลอดเวลา",
               style: TextStyle(fontSize: 14),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -94,7 +139,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       onTap: () {
         Navigator.push(
           ref.context,
-          MaterialPageRoute(builder: (context) => const ReportIncidentPage())
+          MaterialPageRoute(builder: (context) => const ReportIncidentPage()),
         );
       },
       child: Center(
@@ -129,7 +174,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             const Text(
               "กดเพื่อขอความช่วยเหลือทันที",
               style: TextStyle(color: Colors.grey),
-            )
+            ),
           ],
         ),
       ),
@@ -152,44 +197,34 @@ class _HomePageState extends ConsumerState<HomePage> {
               "ขณะนี้คุณอยู่ในพื้นที่เฝ้าระวัง\nกรุณาติดตามประกาศจากเจ้าหน้าที่",
               style: TextStyle(fontSize: 13),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _latestIncident() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "เหตุการณ์ล่าสุด",
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
+  Widget _nearIncident(List<IncidentModel> nearByIncidents) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: nearByIncidents.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final incident = nearByIncidents[index];
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.grey.shade300),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Row(
-            children: const [
-              Icon(Icons.history, color: Colors.blue),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  "น้ำท่วมในพื้นที่บ้าน\nสถานะ: กำลังดำเนินการ",
-                ),
-              ),
-              Icon(Icons.chevron_right),
-            ],
+          child: Text(
+            "${incident.title}\nสถานะ: ${incident.status.toLowerCase()}",
           ),
-        ),
-      ],
+        );
+      },
     );
   }
-
 }
 
 class _ActionCard extends StatelessWidget {
