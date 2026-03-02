@@ -7,6 +7,7 @@ import 'package:thai_safe/features/setting/presentation/setting_page.dart';
 class AppShell extends StatefulWidget {
   const AppShell({ super.key });
 
+  @override
   _AppShellState createState() => _AppShellState();
 }
 

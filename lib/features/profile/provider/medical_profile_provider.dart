@@ -67,7 +67,7 @@ class MedicalProfileController extends StateNotifier<MedicalProfileState> {
       if (mounted) {
         state = state.copyWith(isLoading: false, error: e.toString());
       }
-      throw e;
+      rethrow;
     }
   }
 

@@ -51,8 +51,12 @@ class _SignupOtpPageState extends ConsumerState<SignupOtpPage> {
   @override
   void dispose() {
     _timer?.cancel();
-    for (final f in focusNodes) f.dispose();
-    for (final c in controllers) c.dispose();
+    for (final f in focusNodes) {
+      f.dispose();
+    }
+    for (final c in controllers) {
+      c.dispose();
+    }
     super.dispose();
   }
 

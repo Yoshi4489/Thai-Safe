@@ -119,7 +119,17 @@ class IncidentDetailsPage extends StatelessWidget {
             // 1. ภาพหลัก
             GestureDetector(
               onTap: () {
-                // TODO: ถ้าอยากให้แตะเพื่อขยายภาพ สามารถเพิ่มหน้า FullScreenImage ได้
+                showDialog(
+                  context: context,
+                  builder: (context) => Center(
+                    child: Container(
+                      padding: EdgeInsets.all(20),
+                      child: Image.network(
+                        coverPhoto
+                      ),
+                    ),
+                  ),
+                );
               },
               child: Image.network(
                 coverPhoto,

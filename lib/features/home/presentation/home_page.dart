@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 import 'package:thai_safe/features/incidents/controllers/incident_controller.dart';
 import 'package:thai_safe/features/incidents/data/incident_model.dart';
+import 'package:thai_safe/features/maps_alert/presentation/pages/incident_details_page.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/report_incident_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -208,18 +209,25 @@ class _HomePageState extends ConsumerState<HomePage> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: nearByIncidents.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final incident = nearByIncidents[index];
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            "${incident.title}\nสถานะ: ${incident.status.toLowerCase()}",
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(
+              builder: (BuildContext context) => IncidentDetailsPage(incident: incident)
+            ));
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              "${incident.title}\nสถานะ: ${incident.status.toLowerCase()}",
+            ),
           ),
         );
       },

@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:geoflutterfire2/geoflutterfire2.dart';
-import 'package:thai_safe/core/services/cloudinary_provider.dart';
 import '../data/incident_model.dart';
 
 class IncidentService {

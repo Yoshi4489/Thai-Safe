@@ -61,7 +61,7 @@ class _ReportIncidentPageState extends ConsumerState<ReportIncidentPage> {
   final TextEditingController _fireFloorsCtrl = TextEditingController();
   String _fireRisk = 'ไม่มี';
   String _fireWaterSource = 'ไม่มี';
-  Map<String, bool> _fireNeeds = {
+  final Map<String, bool> _fireNeeds = {
     'ถังดับเพลิง': false,
     'รถดับเพลิง': false,
     'รถพยาบาล': false,
@@ -73,12 +73,12 @@ class _ReportIncidentPageState extends ConsumerState<ReportIncidentPage> {
   bool _eqHasTrapped = false;
   final TextEditingController _eqTrappedCountCtrl = TextEditingController();
   String _eqRisk = 'ไม่มีความเสี่ยงต่อเนื่อง';
-  Map<String, bool> _eqUtilities = {
+  final Map<String, bool> _eqUtilities = {
     'ไฟฟ้าดับ': false,
     'ท่อประปาแตก': false,
     'แก๊สรั่ว': false,
   };
-  Map<String, bool> _eqNeeds = {
+  final Map<String, bool> _eqNeeds = {
     'ทีมค้นหา (K9/USAR)': false,
     'หน่วยแพทย์': false,
     'อาหาร/ที่พักชั่วคราว': false,
@@ -91,7 +91,7 @@ class _ReportIncidentPageState extends ConsumerState<ReportIncidentPage> {
   String _chemArea = 'ภายในอาคาร';
   bool _chemHasInjured = false;
   final TextEditingController _chemInjuredCtrl = TextEditingController();
-  Map<String, bool> _chemNeeds = {
+  final Map<String, bool> _chemNeeds = {
     'ชุด PPE/กู้ภัยสารเคมี': false,
     'รถพยาบาล': false,
     'ประกาศอพยพ': false,
@@ -106,7 +106,7 @@ class _ReportIncidentPageState extends ConsumerState<ReportIncidentPage> {
   String _violInjuryType = 'บาดเจ็บเล็กน้อย';
   String _violSafety = 'กำลังซ่อนตัว';
   final TextEditingController _violSuspectCtrl = TextEditingController();
-  Map<String, bool> _violNeeds = {
+  final Map<String, bool> _violNeeds = {
     'ตำรวจ': false,
     'รถพยาบาล': false,
     'หน่วยกู้ภัย': false,
@@ -114,7 +114,7 @@ class _ReportIncidentPageState extends ConsumerState<ReportIncidentPage> {
 
   bool _otherHasAffected = false;
   final TextEditingController _otherAffectedCtrl = TextEditingController();
-  Map<String, bool> _otherNeeds = {
+  final Map<String, bool> _otherNeeds = {
     'แพทย์/รถพยาบาล': false,
     'ตำรวจ': false,
     'กู้ภัยทางถนน': false,
@@ -297,7 +297,7 @@ Future<void> _searchLocation() async {
             vertical: 8,
           ),
         ),
-        value: currentValue,
+        initialValue: currentValue,
         items: items
             .map(
               (e) => DropdownMenuItem(
@@ -808,7 +808,7 @@ Future<void> _searchLocation() async {
         title: Text(title, style: const TextStyle(fontSize: 14)),
         value: val,
         onChanged: onChanged,
-        activeColor: Colors.redAccent,
+        activeThumbColor: Colors.redAccent,
         dense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       );

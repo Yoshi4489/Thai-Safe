@@ -189,7 +189,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         radius: 40,
                         backgroundImage:
                             authController.user?.profile_url != null
-                            ? NetworkImage(authController.user!.profile_url!)
+                            ? NetworkImage(authController.user!.profile_url)
                             : null,
                         child: authController.user?.profile_url == null
                             ? const Icon(Icons.person, size: 40)
