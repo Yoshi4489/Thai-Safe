@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:thai_safe/features/admin/presentation/admin_page.dart';
+import 'package:thai_safe/features/incident_management/presentation/incident_management_page.dart';
+import 'package:thai_safe/features/rescue_approval/presentation/rescue_approval_page.dart';
 import 'package:thai_safe/features/home/presentation/home_page.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/map_alert_page.dart';
 import 'package:thai_safe/features/profile/presentation/profile_page.dart';
@@ -76,6 +78,8 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final adminPages = [
       const AdminHomePage(),
+      const IncidentManagementPage(),
+      const RescueApprovalPage(),
       const SettingPage(),
     ];
 
