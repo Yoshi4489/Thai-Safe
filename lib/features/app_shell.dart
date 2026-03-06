@@ -1,43 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:thai_safe/features/admin/presentation/admin_page.dart';
 import 'package:thai_safe/features/home/presentation/home_page.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/map_alert_page.dart';
 import 'package:thai_safe/features/profile/presentation/profile_page.dart';
 import 'package:thai_safe/features/setting/presentation/setting_page.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 
-class AppShell extends StatefulWidget {
-  const AppShell({ super.key });
+class AppShell extends ConsumerStatefulWidget {
+  const AppShell({super.key});
 
   @override
-  _AppShellState createState() => _AppShellState();
+  ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> {
   int _selectedIndex = 0;
-  final Map<String, dynamic> items = {
-    "home": {
-      'icon': Icon(Icons.home),
-      'label': "Home",
-    },
-    "map": {
-      'icon': Icon(Icons.location_on_outlined),
-      'label': "Map",
-    },
-    "profile": {
-      'icon': Icon(Icons.person),
-      'label': "Profile",
-    },
-    "setting": {
-      'icon': Icon(Icons.settings),
-      'label': "Settings",
-    }
-  };
-
-   final List<Widget> _pages = [
-    HomePage(),
-    MapAlertPage(),
-    ProfilePage(),
-    SettingPage()
-  ];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -47,19 +25,76 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+
+    final authState = ref.watch(authControllerProvider);
+    final role = authState.user?.role.toLowerCase() ?? "user";
+
+    final userItems = [
+      {
+        'icon': const Icon(Icons.home),
+        'label': "Home",
+      },
+      {
+        'icon': const Icon(Icons.location_on_outlined),
+        'label': "Map",
+      },
+      {
+        'icon': const Icon(Icons.person),
+        'label': "Profile",
+      },
+      {
+        'icon': const Icon(Icons.settings),
+        'label': "Settings",
+      }
+    ];
+
+    final userPages = [
+      const HomePage(),
+      const MapAlertPage(),
+      const ProfilePage(),
+      const SettingPage(),
+    ];
+
+    final adminItems = [
+      {
+        'icon': const Icon(Icons.dashboard),
+        'label': "Dashboard",
+      },
+      {
+        'icon': const Icon(Icons.warning),
+        'label': "Incidents",
+      },
+      {
+        'icon': const Icon(Icons.verified_user),
+        'label': "Approvals",
+      },
+      {
+        'icon': const Icon(Icons.settings),
+        'label': "Settings",
+      }
+    ];
+
+    final adminPages = [
+      const AdminHomePage(),
+      const SettingPage(),
+    ];
+
+    final items = role == "admin" ? adminItems : userItems;
+    final pages = role == "admin" ? adminPages : userPages;
+
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: _pages,
+        children: pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
-        items: items.values.map<BottomNavigationBarItem>((item) {
+        items: items.map<BottomNavigationBarItem>((item) {
           return BottomNavigationBarItem(
-            icon: item['icon'],
-            label: item['label']
+            icon: item['icon'] as Widget,
+            label: item['label'] as String,
           );
         }).toList(),
       ),
