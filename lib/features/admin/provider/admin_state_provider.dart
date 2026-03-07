@@ -50,11 +50,13 @@ class AdminIncidentContoller extends StateNotifier<IncidentsState> {
       final total = await _incidentsService.getTotalIncidents();
       final pending = await _incidentsService.getIncidentsByStatus('Pending');
       final resolved = await _incidentsService.getIncidentsByStatus('Resolved');
+      final recent = await _incidentsService.getRecentlyIncidents().first;
 
       state = state.copyWith(
         totalIncidents: total,
         pendingIncidents: pending,
         resolvedIncidents: resolved,
+        recentIncidents: recent,
       );
     }   catch (e) {
       state = state.copyWith(error: e.toString());

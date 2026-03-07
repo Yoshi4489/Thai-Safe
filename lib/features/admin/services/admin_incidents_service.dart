@@ -17,13 +17,15 @@ class AdminIncidentsService {
     return snapshot.size;
   }
 
-Stream<List<IncidentModel>> getRecentlyIncidents() {
-  return _incidentsRef
-      .orderBy('created_at', descending: true)
-      .limit(5)
-      .snapshots()
-      .map((snapshot) => snapshot.docs
-          .map((doc) => IncidentModel.fromMap(doc.data(), docId: doc.id))
-          .toList());
-}
+  Stream<List<IncidentModel>> getRecentlyIncidents() {
+    return _incidentsRef
+        .orderBy('created_at', descending: true)
+        .limit(5)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => IncidentModel.fromMap(doc.data(), docId: doc.id))
+              .toList(),
+        );
+  }
 }

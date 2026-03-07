@@ -217,31 +217,57 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
   }
 
   Widget _recentIncidents() {
+    final incidentStatus = {
+      "Pending": Colors.orange,
+      "Resolved": Colors.green,
+      "Acknowledged": Colors.blue,
+      "In Progress": Colors.blueGrey,
+      "Cancelled": Colors.red,
+    };
+
     final adminIncident = ref.watch(adminIncidentControllerProvider);
-    return ListView.separated(
+
+    if (adminIncident.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (adminIncident.recentIncidents.isEmpty) {
+      return const Center(child: Text("No recent incidents"));
+    }
+
+    return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: 3,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemCount: adminIncident.recentIncidents.length,
       itemBuilder: (context, index) {
+        final recentIncident = adminIncident.recentIncidents[index];
+
         return Container(
-          padding: const EdgeInsets.all(14),
+          margin: const EdgeInsets.symmetric(
+            vertical: 6,
+          ), // space between items
           decoration: BoxDecoration(
+            color: Colors.grey.shade100,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade300),
+            border: Border.all(
+              color: Colors.grey.shade300, // border color
+              width: 1,
+            ),
           ),
-          child: const Row(
-            children: [
-              Icon(Icons.location_on, color: Colors.red),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  "Flood reported near ถนนสุขุมวิท",
-                  style: TextStyle(fontSize: 14),
-                ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            title: Text("${recentIncident.title}"),
+            subtitle: Text(
+              "Status: ${recentIncident.status}",
+              style: TextStyle(
+                color: incidentStatus[recentIncident.status] ?? Colors.black,
               ),
-              Text("Pending", style: TextStyle(color: Colors.orange)),
-            ],
+            ),
+            leading: const Icon(Icons.location_pin, color: Colors.red),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
           ),
         );
       },
