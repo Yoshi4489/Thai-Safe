@@ -1,5 +1,6 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:thai_safe/features/admin/services/incidents_service.dart';
+import 'package:thai_safe/features/admin/services/admin_incidents_service.dart';
 import 'package:thai_safe/features/incidents/data/incident_model.dart';
 
 class IncidentsState {
@@ -39,7 +40,7 @@ class IncidentsState {
 }
 
 class AdminIncidentContoller extends StateNotifier<IncidentsState> {
-    final IncidentsService _incidentsService;
+    final AdminIncidentsService _incidentsService;
 
   AdminIncidentContoller(this._incidentsService) : super(IncidentsState());
 
@@ -49,6 +50,12 @@ class AdminIncidentContoller extends StateNotifier<IncidentsState> {
       final total = await _incidentsService.getTotalIncidents();
       final pending = await _incidentsService.getIncidentsByStatus('pending');
       final resolved = await _incidentsService.getIncidentsByStatus('resolved');
+
+      state = state.copyWith(
+        totalIncidents: total,
+        pendingIncidents: pending,
+        resolvedIncidents: resolved,
+      );
     }   catch (e) {
       state = state.copyWith(error: e.toString());
     } finally {
@@ -56,3 +63,13 @@ class AdminIncidentContoller extends StateNotifier<IncidentsState> {
     }
   }
 }
+
+final adminIncidentServiceProvider = Provider<AdminIncidentsService>((ref) {
+  return AdminIncidentsService();
+});
+
+final adminIncidentControllerProvider =
+    StateNotifierProvider<AdminIncidentContoller, IncidentsState>((ref) {
+  final service = ref.watch(adminIncidentServiceProvider);
+  return AdminIncidentContoller(service)..loadIncidentsData();
+});

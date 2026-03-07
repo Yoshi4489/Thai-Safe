@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class IncidentsService {
+class AdminIncidentsService {
   final CollectionReference<Map<String, dynamic>> _incidentsRef =
       FirebaseFirestore.instance.collection('incidents');
   

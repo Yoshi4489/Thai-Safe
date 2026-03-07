@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:thai_safe/features/admin/provider/admin_state_provider.dart';
 
 class AdminHomePage extends ConsumerWidget {
   const AdminHomePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final incidentController = ref.watch(adminIncidentControllerProvider);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
