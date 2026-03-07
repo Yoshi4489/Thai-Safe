@@ -29,7 +29,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget build(BuildContext context) {
 
     final authState = ref.watch(authControllerProvider);
-    final role = authState.user?.role.toLowerCase() ?? "user";
+    final role = authState.user?.role.toLowerCase();
 
     final userItems = [
       {
@@ -85,6 +85,12 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     final items = role == "admin" ? adminItems : userItems;
     final pages = role == "admin" ? adminPages : userPages;
+
+    if (authState.isLoading || role == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       body: IndexedStack(

@@ -7,7 +7,6 @@ class AdminHomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final incidentController = ref.watch(adminIncidentControllerProvider);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -41,7 +40,7 @@ class AdminHomePage extends ConsumerWidget {
 
             const SizedBox(height: 12),
 
-            _dashboardStats(),
+            _dashboardStats(ref),
 
             const SizedBox(height: 24),
 
@@ -97,14 +96,15 @@ class AdminHomePage extends ConsumerWidget {
     );
   }
 
-  Widget _dashboardStats() {
+  Widget _dashboardStats(WidgetRef ref) {
+    final incidentController = ref.watch(adminIncidentControllerProvider);
     return Row(
       children: [
-        Expanded(child: _statCard("Incidents", "120", Colors.red)),
+        Expanded(child: _statCard("Incidents", incidentController.totalIncidents.toString(), Colors.red)),
         const SizedBox(width: 10),
-        Expanded(child: _statCard("Pending", "32", Colors.orange)),
+        Expanded(child: _statCard("Pending", incidentController.pendingIncidents.toString(), Colors.orange)),
         const SizedBox(width: 10),
-        Expanded(child: _statCard("Resolved", "88", Colors.green)),
+        Expanded(child: _statCard("Resolved", incidentController.resolvedIncidents.toString(), Colors.green)),
       ],
     );
   }
