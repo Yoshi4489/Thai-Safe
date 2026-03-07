@@ -5,7 +5,7 @@ import 'package:thai_safe/features/authentication/providers/auth_state_provider.
 import 'package:thai_safe/features/incidents/controllers/incident_controller.dart';
 import 'package:thai_safe/features/incidents/data/incident_model.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/incident_details_page.dart';
-import 'package:thai_safe/features/maps_alert/presentation/pages/report_incident_page.dart';
+import 'package:thai_safe/features/incidents/presentation/pages/report_incident_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
