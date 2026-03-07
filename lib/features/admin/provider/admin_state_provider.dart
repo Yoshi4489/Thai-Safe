@@ -48,8 +48,8 @@ class AdminIncidentContoller extends StateNotifier<IncidentsState> {
     state = state.copyWith(isLoading: true, error: '');
     try {
       final total = await _incidentsService.getTotalIncidents();
-      final pending = await _incidentsService.getIncidentsByStatus('pending');
-      final resolved = await _incidentsService.getIncidentsByStatus('resolved');
+      final pending = await _incidentsService.getIncidentsByStatus('Pending');
+      final resolved = await _incidentsService.getIncidentsByStatus('Resolved');
 
       state = state.copyWith(
         totalIncidents: total,

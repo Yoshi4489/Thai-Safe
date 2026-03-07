@@ -77,7 +77,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     ];
 
     final adminPages = [
-      const AdminHomePage(),
+      AdminHomePage(onNavigate: _onItemTapped,),
       const IncidentManagementPage(),
       const RescueApprovalPage(),
       const SettingPage(),

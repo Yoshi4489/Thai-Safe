@@ -2,11 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/features/admin/provider/admin_state_provider.dart';
 
-class AdminHomePage extends ConsumerWidget {
-  const AdminHomePage({super.key});
+class AdminHomePage extends ConsumerStatefulWidget {
+  Function(int) onNavigate;
+  AdminHomePage({super.key, required this.onNavigate});
+  @override
+  ConsumerState<AdminHomePage> createState() => _AdminHomePageState();
+}
+
+class _AdminHomePageState extends ConsumerState<AdminHomePage> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -26,7 +36,6 @@ class AdminHomePage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             /// ADMIN WELCOME
             _adminWelcome(),
 
@@ -65,7 +74,6 @@ class AdminHomePage extends ConsumerWidget {
             const SizedBox(height: 12),
 
             _recentIncidents(),
-
           ],
         ),
       ),
@@ -100,36 +108,68 @@ class AdminHomePage extends ConsumerWidget {
     final incidentController = ref.watch(adminIncidentControllerProvider);
     return Row(
       children: [
-        Expanded(child: _statCard("Incidents", incidentController.totalIncidents.toString(), Colors.red)),
+        Expanded(
+          child: _statCard(
+            "Incidents",
+            incidentController.isLoading
+                ? CircularProgressIndicator()
+                : Text(
+                    incidentController.totalIncidents.toString(),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    ),
+                  ),
+            Colors.red,
+          ),
+        ),
         const SizedBox(width: 10),
-        Expanded(child: _statCard("Pending", incidentController.pendingIncidents.toString(), Colors.orange)),
+        Expanded(
+          child: _statCard(
+            "Pending",
+            incidentController.isLoading
+                ? CircularProgressIndicator()
+                : Text(
+                    incidentController.pendingIncidents.toString(),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange,
+                    ),
+                  ),
+            Colors.orange,
+          ),
+        ),
         const SizedBox(width: 10),
-        Expanded(child: _statCard("Resolved", incidentController.resolvedIncidents.toString(), Colors.green)),
+        Expanded(
+          child: _statCard(
+            "Resolved",
+            incidentController.isLoading
+                ? CircularProgressIndicator()
+                : Text(
+                    incidentController.resolvedIncidents.toString(),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+            Colors.green,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _statCard(String title, String value, Color color) {
+  Widget _statCard(String title, Widget value, Color color) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(title),
-        ],
-      ),
+      child: Column(children: [value, const SizedBox(height: 4), Text(title)]),
     );
   }
 
@@ -140,14 +180,20 @@ class AdminHomePage extends ConsumerWidget {
           icon: Icons.warning_amber_rounded,
           title: "Manage Incidents",
           subtitle: "View and update incident status",
-          onTap: () {},
+          onTap: () {
+            setState(() {
+              widget.onNavigate(1);
+            });
+          },
         ),
         const SizedBox(height: 10),
         _actionTile(
           icon: Icons.verified_user,
           title: "Rescue Approval",
           subtitle: "Approve rescue team accounts",
-          onTap: () {},
+          onTap: () {
+            widget.onNavigate(2);
+          },
         ),
       ],
     );
@@ -160,9 +206,7 @@ class AdminHomePage extends ConsumerWidget {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       tileColor: Colors.grey.shade100,
       leading: Icon(icon, color: Colors.blue),
       title: Text(title),
@@ -173,6 +217,7 @@ class AdminHomePage extends ConsumerWidget {
   }
 
   Widget _recentIncidents() {
+    final adminIncident = ref.watch(adminIncidentControllerProvider);
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -195,10 +240,7 @@ class AdminHomePage extends ConsumerWidget {
                   style: TextStyle(fontSize: 14),
                 ),
               ),
-              Text(
-                "Pending",
-                style: TextStyle(color: Colors.orange),
-              )
+              Text("Pending", style: TextStyle(color: Colors.orange)),
             ],
           ),
         );
