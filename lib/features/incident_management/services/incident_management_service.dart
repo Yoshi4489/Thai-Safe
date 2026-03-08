@@ -15,4 +15,11 @@ class IncidentManagementService {
               .toList(),
         );
   }
+
+  Future<void> updateIncidentStatus(String incidentId, String status) async {
+    await FirebaseFirestore.instance
+        .collection("incidents")
+        .doc(incidentId)
+        .update({"status": status});
+  }
 }

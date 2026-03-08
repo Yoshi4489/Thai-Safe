@@ -91,8 +91,28 @@ class IncidentManagementController
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  Future<void> updateIncidentStatus(String incidentId, String status) async {
+    state = state.copyWith(isLoading: true, error: "");
+    try {
+      await _incidentManagementService.updateIncidentStatus(incidentId, status);
+      state = state.copyWith(isLoading: false, error: "");
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
 }
 
-final incidentManagementController = Provider<IncidentManagementService>((ref) {
+final incidentManagementService = Provider<IncidentManagementService>((ref) {
   return IncidentManagementService();
 });
+
+final incidentManagementControllerProvider =
+    StateNotifierProvider<
+      IncidentManagementController,
+      IncidentManagementState
+    >((ref) {
+      final service = ref.watch(incidentManagementService);
+      return IncidentManagementController(service)
+        ..loadIncidentByStatus("Pending");
+    });
