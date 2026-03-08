@@ -16,6 +16,7 @@ class _IncidentManagementPageState extends State<IncidentManagementPage> {
     "Acknowledged",
     "In Progress",
     "Resolved",
+    "Cancelled"
   ];
 
   @override

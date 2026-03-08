@@ -25,7 +25,6 @@ class UserModel {
     required this.createdAt,
   });
 
-  /// 🔹 Save to Firestore
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -44,21 +43,20 @@ class UserModel {
   /// 🔹 Read from Firestore
  factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      // ใช้ ?? เพื่อบอกว่าถ้าข้อมูลเป็น null ให้ใช้ค่าว่าง (หรือค่า Default) แทน
       id: map['id'] ?? '',
       firstName: map['first_name'] ?? '',
       lastName: map['last_name'] ?? '',
       tel: map['tel'] ?? '',
       profile_url: map['profile_url'] ?? '',
-      role: map['role'] ?? 'user', // ตั้งค่าเริ่มต้นเป็น user
+      role: map['role'] ?? 'user',
       gender: map['gender'] ?? '',
       
       // จัดการ Timestamp อย่างปลอดภัย
       birthdate: map['birthdate'] != null 
           ? (map['birthdate'] as Timestamp).toDate() 
-          : DateTime.now(), // ถ้าไม่มีวันเกิด ให้ใส่วันนี้ไปก่อน
+          : DateTime.now(),
           
-      firstLogin: map['firstLogin'] ?? true, // ถ้าไม่มีข้อมูล ให้ถือว่าเพิ่งล็อกอินครั้งแรก
+      firstLogin: map['firstLogin'] ?? true,
       
       createdAt: map['created_at'] != null 
           ? (map['created_at'] as Timestamp).toDate() 
