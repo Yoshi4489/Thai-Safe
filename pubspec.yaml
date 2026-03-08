@@ -73,6 +73,15 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/images/common/logo.jpg
+
+  android_12:
+    color: "#FFFFFF"
+    image: assets/images/common/logo.jpg
+
+  fullscreen: true
 
 # The following section is specific to Flutter packages.
 flutter:
@@ -96,16 +105,6 @@ flutter:
 
     # API KEYS
     - .env
-
-flutter_native_splash:
-  color: "#FFFFFF"
-  image: assets/images/common/logo.jpg
-
-  android_12:
-    color: "#FFFFFF"
-    image: assets/images/common/logo.jpg
-
-  fullscreen: true
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
