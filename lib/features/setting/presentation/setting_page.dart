@@ -8,10 +8,7 @@ class SettingPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Settings"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Settings"), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -63,9 +60,7 @@ class SettingPage extends ConsumerWidget {
   }) {
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Icon(icon),
         title: Text(title),
@@ -79,15 +74,10 @@ class SettingPage extends ConsumerWidget {
     return Card(
       color: Colors.red.shade50,
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Icon(Icons.logout, color: Colors.red.shade700),
-        title: Text(
-          "Log out",
-          style: TextStyle(color: Colors.red.shade700),
-        ),
+        title: Text("Log out", style: TextStyle(color: Colors.red.shade700)),
         onTap: () => _confirmLogout(context, ref),
       ),
     );
@@ -107,11 +97,9 @@ class SettingPage extends ConsumerWidget {
             child: const Text("Cancel"),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Log out", style: TextStyle(color: Colors.white),),
+            child: const Text("Log out", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -119,6 +107,7 @@ class SettingPage extends ConsumerWidget {
 
     if (confirm == true) {
       await ref.read(authControllerProvider.notifier).logout();
+      Navigator.pushNamedAndRemoveUntil(context, "/", (route) => false);
     }
   }
 }

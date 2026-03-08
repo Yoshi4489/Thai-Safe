@@ -205,6 +205,20 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _nearIncident(List<IncidentModel> nearByIncidents) {
+    if (nearByIncidents.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Text(
+          "ไม่มีเหตุการณ์ใกล้เคียงคุณในขณะนี้",
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
