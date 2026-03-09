@@ -28,97 +28,99 @@ class SignupPhonePage extends ConsumerWidget {
 
     final authState = ref.watch(authControllerProvider);
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(20),
+      body: SafeArea(
         child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(Icons.groups, size: 80, color: Colors.blue),
-              Text(
-                "ThaiSafe",
-                style: TextStyle(
-                  fontSize: 50,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blue,
-                  letterSpacing: 3,
-                ),
-              ),
-              Text(
-                "รวดเร็ว มั่นคง ปลอดภัย",
-                style: GoogleFonts.sarabun(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.grey[600],
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 30),
-              TextFieldContainer(
-                child: TextField(
-                  controller: _telcontroller,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    prefixIcon: Icon(Icons.phone),
-                    hintText: "Telephone",
-                    border: InputBorder.none,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(Icons.groups, size: 80, color: Colors.blue),
+                Text(
+                  "ThaiSafe",
+                  style: TextStyle(
+                    fontSize: 50,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.blue,
+                    letterSpacing: 3,
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: authState.isLoading
-                      ? null
-                      : () async {
-                          final phone = _telcontroller.text.trim();
-                          if (!PhoneValidator.isValidThaiPhone(phone)) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  "กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง",
+                Text(
+                  "รวดเร็ว มั่นคง ปลอดภัย",
+                  style: GoogleFonts.sarabun(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.grey[600],
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                TextFieldContainer(
+                  child: TextField(
+                    controller: _telcontroller,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.phone),
+                      hintText: "Telephone",
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: authState.isLoading
+                        ? null
+                        : () async {
+                            final phone = _telcontroller.text.trim();
+                            if (!PhoneValidator.isValidThaiPhone(phone)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    "กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง",
+                                  ),
                                 ),
-                              ),
-                            );
-                            return;
-                          }
-
-                          final normalizedPhone = PhoneValidator.normalizeThaiPhone(phone);
-
-                          await ref
-                              .read(authControllerProvider.notifier)
-                              .sendOtp(normalizedPhone);
-                        },
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(),
+                              );
+                              return;
+                            }
+                    
+                            final normalizedPhone = PhoneValidator.normalizeThaiPhone(phone);
+                    
+                            await ref
+                                .read(authControllerProvider.notifier)
+                                .sendOtp(normalizedPhone);
+                          },
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(),
+                    ),
+                    child: authState.isLoading
+                        ? SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(color: Colors.white)
+                        )
+                        : Text("Sign Up"),
                   ),
-                  child: authState.isLoading
-                      ? SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(color: Colors.white)
-                      )
-                      : Text("Sign Up"),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(child: Divider(thickness: 1)),
-                  const SizedBox(width: 10),
-                  Text("or sign up with"),
-                  const SizedBox(width: 10),
-                  Expanded(child: Divider(thickness: 1)),
-                ],
-              ),
-              const SizedBox(height: 15),
-              IconButton(
-                onPressed: null,
-                icon: Image.asset("assets/images/auth/ThaiID.png", height: 40),
-              ),
-            ],
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(child: Divider(thickness: 1)),
+                    const SizedBox(width: 10),
+                    Text("or sign up with"),
+                    const SizedBox(width: 10),
+                    Expanded(child: Divider(thickness: 1)),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                IconButton(
+                  onPressed: null,
+                  icon: Image.asset("assets/images/auth/ThaiID.png", height: 40),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -64,7 +64,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final incidentController = ref.watch(incidentControllerProvider);
     final user = ref.watch(authControllerProvider).user;
-    
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,

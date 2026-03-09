@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/features/rescue_approval/data/resque_request_model.dart';
 import 'package:thai_safe/features/rescue_approval/provider/rescue_approval_provider.dart';
+import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 
 class RescueApprovalPage extends ConsumerStatefulWidget {
   const RescueApprovalPage({super.key});
@@ -17,7 +18,10 @@ class _RescueApprovalPageState extends ConsumerState<RescueApprovalPage> {
     final controller = ref.read(rescueApprovalControllerProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Rescue Team Approval")),
+      appBar: AppBar(
+        title: const Text("Rescue Team Approval"),
+        automaticallyImplyLeading: false,
+      ),
 
       body: RefreshIndicator(
         onRefresh: () async {
@@ -59,6 +63,7 @@ class _RescueApprovalPageState extends ConsumerState<RescueApprovalPage> {
 
   Widget _approvalCard(RescueRequestModel request) {
     final service = ref.read(rescueApprovalService);
+    final authController = ref.read(authControllerProvider);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -97,13 +102,20 @@ class _RescueApprovalPageState extends ConsumerState<RescueApprovalPage> {
               /// APPROVE
               Expanded(
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.check, color: Colors.white,),
-                  label: const Text("Approve", style: TextStyle(color: Colors.white),),
+                  icon: const Icon(Icons.check, color: Colors.white),
+                  label: const Text(
+                    "Approve",
+                    style: TextStyle(color: Colors.white),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                   ),
                   onPressed: () async {
-                    await service.approveRescueRequest(request.id, "admin", request.userId);
+                    await service.approveRescueRequest(
+                      request.id,
+                      authController.user!.id,
+                      request.userId,
+                    );
 
                     if (!mounted) return;
 
@@ -123,11 +135,17 @@ class _RescueApprovalPageState extends ConsumerState<RescueApprovalPage> {
               /// REJECT
               Expanded(
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.close, color: Colors.white,),
-                  label: const Text("Reject", style: TextStyle(color: Colors.white),),
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  label: const Text(
+                    "Reject",
+                    style: TextStyle(color: Colors.white),
+                  ),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                   onPressed: () async {
-                    await service.rejectRescueRequest(request.id, "admin");
+                    await service.rejectRescueRequest(
+                      request.id,
+                      authController.user!.id,
+                    );
 
                     if (!mounted) return;
 

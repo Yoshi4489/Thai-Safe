@@ -97,7 +97,10 @@ class _IncidentManagementPageState
       incidentManagementControllerProvider,
     );
     return Scaffold(
-      appBar: AppBar(title: const Text("Incident Management")),
+      appBar: AppBar(
+        title: const Text("Incident Management"),
+        automaticallyImplyLeading: false,
+      ),
       body: Column(
         children: [
           /// STATUS FILTER

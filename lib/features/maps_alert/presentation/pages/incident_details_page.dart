@@ -262,7 +262,7 @@ class IncidentDetailsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(authControllerProvider).user;
-    final bool isRescue = currentUser?.role == 'rescue' || currentUser?.role == 'RESCUER' || currentUser?.role == 'admin' || currentUser?.role == 'ADMIN' || currentUser?.role == 'officer';
+    final bool isRescue = currentUser?.role == 'rescue' || currentUser?.role == 'RESCUER' || currentUser?.role == 'admin' || currentUser?.role == 'ADMIN';
 
     // เช็ครูปภาพ
     final List<dynamic> imageUrls = incident.imageUrls ?? [];

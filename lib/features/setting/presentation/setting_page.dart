@@ -12,7 +12,11 @@ class SettingPage extends ConsumerWidget {
     final currentUser = ref.watch(authControllerProvider).user;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Settings"), centerTitle: true),
+      appBar: AppBar(
+        title: const Text("Settings"),
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -29,9 +33,11 @@ class SettingPage extends ConsumerWidget {
           ),
 
           const SizedBox(height: 24),
-          
-          // ✅ ส่วนของ Rescue Request (จะแสดงเมื่อ Login แล้ว และยังไม่ได้เป็น rescue/admin)
-          if (currentUser != null && currentUser.role != 'rescue' && currentUser.role != 'admin' && currentUser.role != 'officer') ...[
+
+          // ส่วนของ Rescue Request (จะแสดงเมื่อ Login แล้ว และยังไม่ได้เป็น rescue/admin)
+          if (currentUser != null &&
+              currentUser.role != 'rescue' &&
+              currentUser.role != 'ADMIN') ...[
             _sectionTitle("Rescue Team"),
             _requestRescueTile(context, currentUser),
             const SizedBox(height: 24),
@@ -51,12 +57,20 @@ class SettingPage extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey),
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey,
+        ),
       ),
     );
   }
 
-  Widget _settingsTile({required IconData icon, required String title, required VoidCallback onTap}) {
+  Widget _settingsTile({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
     return Card(
       elevation: 0,
       color: Colors.grey.shade100,
@@ -79,13 +93,25 @@ class SettingPage extends ConsumerWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Icon(Icons.medical_services, color: Colors.blue.shade700),
-        title: Text("Request To Be Rescue", style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold)),
+        title: Text(
+          "Request To Be Rescue",
+          style: TextStyle(
+            color: Colors.blue.shade700,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () async {
           try {
-            showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
-            
-            final name = '${currentUser.firstName ?? ''} ${currentUser.lastName ?? ''}'.trim();
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => const Center(child: CircularProgressIndicator()),
+            );
+
+            final name =
+                '${currentUser.firstName ?? ''} ${currentUser.lastName ?? ''}'
+                    .trim();
             await RescueApprovalService().createRescueRequest(
               userId: currentUser.id,
               name: name.isEmpty ? 'ไม่ระบุชื่อ' : name,
@@ -94,12 +120,22 @@ class SettingPage extends ConsumerWidget {
 
             if (context.mounted) {
               Navigator.pop(context); // ปิดโหลด
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("ส่งคำขอสำเร็จ! กรุณารอ Admin อนุมัติ"), backgroundColor: Colors.green));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("ส่งคำขอสำเร็จ! กรุณารอ Admin อนุมัติ"),
+                  backgroundColor: Colors.green,
+                ),
+              );
             }
           } catch (e) {
             if (context.mounted) {
               Navigator.pop(context); // ปิดโหลด
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()), backgroundColor: Colors.red));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(e.toString()),
+                  backgroundColor: Colors.red,
+                ),
+              );
             }
           }
         },

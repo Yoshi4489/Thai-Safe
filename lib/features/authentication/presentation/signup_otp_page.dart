@@ -81,103 +81,107 @@ class _SignupOtpPageState extends ConsumerState<SignupOtpPage> {
     });
 
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset('assets/images/common/logo.jpg', height: 180),
-
-            const SizedBox(height: 16),
-            Text(
-              "Enter OTP code",
-              style: GoogleFonts.roboto(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 8),
-            Text(
-              "OTP has been sent to ${authState.phoneNumber}",
-              style: const TextStyle(color: Colors.grey),
-            ),
-
-            const SizedBox(height: 24),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(otpLength, (index) {
-                return SizedBox(
-                  width: 48,
-                  child: TextField(
-                    controller: controllers[index],
-                    focusNode: focusNodes[index],
-                    keyboardType: TextInputType.number,
-                    textAlign: TextAlign.center,
-                    maxLength: 1,
-                    decoration: InputDecoration(
-                      counterText: '',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                    onChanged: (value) {
-                      if (value.isNotEmpty && index < otpLength - 1) {
-                        focusNodes[index + 1].requestFocus();
-                      }
-                      if (value.isEmpty && index > 0) {
-                        focusNodes[index - 1].requestFocus();
-                      }
-                    },
-                  ),
-                );
-              }),
-            ),
-
-            const SizedBox(height: 12),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Time remaining: ${_formatTime(_startSeconds)}"),
-                TextButton(
-                  onPressed: _startSeconds == 0
-                      ? () {
-                          ref
-                              .read(authControllerProvider.notifier)
-                              .sendOtp(authState.phoneNumber!);
-                          setState(() => _startSeconds = 120);
-                          _startTimer();
-                        }
-                      : null,
-                  child: const Text("Resend OTP"),
+                Image.asset('assets/images/common/logo.jpg', height: 180),
+                  
+                const SizedBox(height: 16),
+                Text(
+                  "Enter OTP code",
+                  style: GoogleFonts.roboto(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                  
+                const SizedBox(height: 8),
+                Text(
+                  "OTP has been sent to ${authState.phoneNumber}",
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                  
+                const SizedBox(height: 24),
+                  
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(otpLength, (index) {
+                    return SizedBox(
+                      width: 48,
+                      child: TextField(
+                        controller: controllers[index],
+                        focusNode: focusNodes[index],
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        maxLength: 1,
+                        decoration: InputDecoration(
+                          counterText: '',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          if (value.isNotEmpty && index < otpLength - 1) {
+                            focusNodes[index + 1].requestFocus();
+                          }
+                          if (value.isEmpty && index > 0) {
+                            focusNodes[index - 1].requestFocus();
+                          }
+                        },
+                      ),
+                    );
+                  }),
+                ),
+                  
+                const SizedBox(height: 12),
+                  
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Time remaining: ${_formatTime(_startSeconds)}"),
+                    TextButton(
+                      onPressed: _startSeconds == 0
+                          ? () {
+                              ref
+                                  .read(authControllerProvider.notifier)
+                                  .sendOtp(authState.phoneNumber!);
+                              setState(() => _startSeconds = 120);
+                              _startTimer();
+                            }
+                          : null,
+                      child: const Text("Resend OTP"),
+                    ),
+                  ],
+                ),
+                  
+                const SizedBox(height: 24),
+                  
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: authState.isLoading
+                        ? null
+                        : () {
+                            final otp = getOtp();
+                            if (otp.length == otpLength) {
+                              ref
+                                  .read(authControllerProvider.notifier)
+                                  .verifyOtp(otp);
+                            }
+                          },
+                    child: authState.isLoading
+                        ? const CircularProgressIndicator()
+                        : const Text("Verify"),
+                  ),
                 ),
               ],
             ),
-
-            const SizedBox(height: 24),
-
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: authState.isLoading
-                    ? null
-                    : () {
-                        final otp = getOtp();
-                        if (otp.length == otpLength) {
-                          ref
-                              .read(authControllerProvider.notifier)
-                              .verifyOtp(otp);
-                        }
-                      },
-                child: authState.isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text("Verify"),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
