@@ -22,7 +22,7 @@ class SignupPhonePage extends ConsumerWidget {
 
       // OTP SENT SUCCESS
       if (next.verificationId != null && prev?.verificationId == null) {
-        Navigator.pushNamed(context, '/sign-up-otp');
+        Navigator.pushNamedAndRemoveUntil(context, '/sign-up-otp', (route) => false);
       }
     });
 

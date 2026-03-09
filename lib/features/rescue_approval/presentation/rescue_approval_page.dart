@@ -19,7 +19,7 @@ class _RescueApprovalPageState extends ConsumerState<RescueApprovalPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Rescue Team Approval"),
+        title: const Text("Rescue Team Approval",           style: TextStyle(fontSize: 14),),
         automaticallyImplyLeading: false,
       ),
 

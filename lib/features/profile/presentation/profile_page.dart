@@ -44,7 +44,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   void _showImageSourceActionSheet() {
     showModalBottomSheet(
-      context: context, 
+      context: context,
       builder: (_) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -62,10 +62,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               onTap: () {
                 _pickImage(ImageSource.camera);
               },
-            )
+            ),
           ],
         ),
-      )
+      ),
     );
   }
 
@@ -135,7 +135,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     // Add this to show stream errors instead of infinite loading
     if (medicalController.error != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text("Error")),
+        appBar: AppBar(
+          title: const Text(
+            "Error",
+          style: TextStyle(fontSize: 14),
+          ),
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -156,9 +161,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        elevation: 0,
-        title: const Text("โปรไฟล์ & ข้อมูลแพทย์"),
-        centerTitle: true,
+        title: const Text(
+          "โปรไฟล์ & ข้อมูลแพทย์",
+          style: TextStyle(fontSize: 14),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -328,11 +334,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
                         List<Map<String, dynamic>> contacts = [];
 
-                        if (!PhoneValidator.isValidThaiPhone(contact_tel_controller_one.text) && contact_tel_controller_one.text.isNotEmpty) {
+                        if (!PhoneValidator.isValidThaiPhone(
+                              contact_tel_controller_one.text,
+                            ) &&
+                            contact_tel_controller_one.text.isNotEmpty) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('เบอร์โทรศัพท์ผู้ติดต่อฉุกเฉิน 1 ไม่ถูกต้อง'),
+                                content: Text(
+                                  'เบอร์โทรศัพท์ผู้ติดต่อฉุกเฉิน 1 ไม่ถูกต้อง',
+                                ),
                                 backgroundColor: Colors.red,
                               ),
                             );
@@ -340,11 +351,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           return;
                         }
 
-                        if (!PhoneValidator.isValidThaiPhone(contact_tel_controller_two.text) && contact_tel_controller_two.text.isNotEmpty) {
+                        if (!PhoneValidator.isValidThaiPhone(
+                              contact_tel_controller_two.text,
+                            ) &&
+                            contact_tel_controller_two.text.isNotEmpty) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('เบอร์โทรศัพท์ผู้ติดต่อฉุกเฉิน 2 ไม่ถูกต้อง'),
+                                content: Text(
+                                  'เบอร์โทรศัพท์ผู้ติดต่อฉุกเฉิน 2 ไม่ถูกต้อง',
+                                ),
                                 backgroundColor: Colors.red,
                               ),
                             );

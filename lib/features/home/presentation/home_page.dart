@@ -70,7 +70,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         elevation: 0,
         title: Text(
           "สวัสดี ${user?.firstName ?? ''}",
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(fontSize: 14),
         ),
         // ✅ เปลี่ยน Action Bar ให้เป็นระบบ Notification Badge (กระดิ่งมีเลข)
         actions: [

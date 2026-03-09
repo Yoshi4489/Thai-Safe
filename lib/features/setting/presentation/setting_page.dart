@@ -13,8 +13,10 @@ class SettingPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Settings"),
-        centerTitle: true,
+        title: const Text(
+          "Settings",
+          style: TextStyle(fontSize: 14),
+        ),
         automaticallyImplyLeading: false,
       ),
       body: ListView(

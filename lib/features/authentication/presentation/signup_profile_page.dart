@@ -16,7 +16,7 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final birthDateController = TextEditingController();
-  
+
   DateTime? selectedBirthDate;
   final genders = ["ชาย", "หญิง", "ไม่ระบุ"];
   String? selectedGender;
@@ -38,14 +38,14 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authControllerProvider, (prev, next) {
       if (next.error != null && next.error != prev?.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.error!)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(next.error!)));
         return;
       }
 
       if (next.user != null && next.user!.firstLogin != true) {
-        Navigator.pushReplacementNamed(context, "/app");
+        Navigator.pushNamedAndRemoveUntil(context, '/app', (route) => false);
       }
     });
 
@@ -53,7 +53,7 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         centerTitle: true,
-        title: const Text("ข้อมูลส่วนบุคคล"),
+        title: const Text("ข้อมูลส่วนบุคคล", style: TextStyle(fontSize: 14)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -145,17 +145,21 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
                       Text("เลือกเพศ"),
                     ],
                   ),
-                  items: genders.map((g) => DropdownMenuItem(
-                        value: g,
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 12),
-                            const Icon(Icons.wc_outlined),
-                            const SizedBox(width: 8),
-                            Text(g),
-                          ],
+                  items: genders
+                      .map(
+                        (g) => DropdownMenuItem(
+                          value: g,
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 12),
+                              const Icon(Icons.wc_outlined),
+                              const SizedBox(width: 8),
+                              Text(g),
+                            ],
+                          ),
                         ),
-                      )).toList(),
+                      )
+                      .toList(),
                   onChanged: (value) {
                     setState(() {
                       selectedGender = value;
@@ -190,7 +194,9 @@ class _SignupProfilePageState extends ConsumerState<SignupProfilePage> {
 
   void _submit() {
     if (_formKey.currentState!.validate() && selectedBirthDate != null) {
-      ref.read(authControllerProvider.notifier).updateProfile(
+      ref
+          .read(authControllerProvider.notifier)
+          .updateProfile(
             firstName: firstNameController.text.trim(),
             lastName: lastNameController.text.trim(),
             birthdate: selectedBirthDate!,

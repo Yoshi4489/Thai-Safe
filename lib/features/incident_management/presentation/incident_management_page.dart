@@ -98,7 +98,10 @@ class _IncidentManagementPageState
     );
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Incident Management"),
+        title: const Text(
+          "Incident Management",
+          style: TextStyle(fontSize: 14),
+        ),
         automaticallyImplyLeading: false,
       ),
       body: Column(

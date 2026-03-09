@@ -20,10 +20,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text(
-          "Admin Dashboard",
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: const Text("Admin Dashboard", style: TextStyle(fontSize: 14)),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 12),
