@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/features/admin/provider/admin_state_provider.dart';
+import 'package:thai_safe/features/maps_alert/presentation/pages/incident_details_page.dart';
 
 class AdminHomePage extends ConsumerStatefulWidget {
   Function(int) onNavigate;
@@ -21,12 +22,6 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text("Admin Dashboard", style: TextStyle(fontSize: 14)),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.notifications_none),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -239,32 +234,39 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
       itemBuilder: (context, index) {
         final recentIncident = adminIncident.recentIncidents[index];
 
-        return Container(
-          margin: const EdgeInsets.symmetric(
-            vertical: 6,
-          ), // space between items
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.grey.shade300, // border color
-              width: 1,
-            ),
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
-            ),
-            title: Text("${recentIncident.title}"),
-            subtitle: Text(
-              "Status: ${recentIncident.status}",
-              style: TextStyle(
-                color: incidentStatus[recentIncident.status] ?? Colors.black,
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(
+              builder: (_) => IncidentDetailsPage(incident: recentIncident),
+            ));
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(
+              vertical: 6,
+            ), // space between items
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.grey.shade300, // border color
+                width: 1,
               ),
             ),
-            leading: const Icon(Icons.location_pin, color: Colors.red),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              title: Text("${recentIncident.title}"),
+              subtitle: Text(
+                "Status: ${recentIncident.status}",
+                style: TextStyle(
+                  color: incidentStatus[recentIncident.status] ?? Colors.black,
+                ),
+              ),
+              leading: const Icon(Icons.location_pin, color: Colors.red),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            ),
           ),
         );
       },

@@ -54,7 +54,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       const HomePage(),
       const MapAlertPage(),
       const ProfilePage(),
-      const SettingPage(),
+      const SettingsPage(),
     ];
 
     final adminItems = [
@@ -80,7 +80,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       AdminHomePage(onNavigate: _onItemTapped,),
       const IncidentManagementPage(),
       const RescueApprovalPage(),
-      const SettingPage(),
+      const SettingsPage(),
     ];
 
     final items = role == "admin" ? adminItems : userItems;
