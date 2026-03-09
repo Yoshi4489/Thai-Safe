@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:thai_safe/features/rescue_approval/data/resque_request_model.dart';
 
-enum RescueRequestStatus { pending, approved, rejected }
-
 class RescueApprovalService {
   final CollectionReference<Map<String, dynamic>> _requestRef =
       FirebaseFirestore.instance.collection('rescue_requests');
@@ -45,7 +43,7 @@ class RescueApprovalService {
 
   Stream<List<RescueRequestModel>> getRescueRequests() {
     return _requestRef
-        .where("status", isEqualTo: RescueRequestStatus.pending.name)
+    .where("status", isEqualTo: "pending")
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
@@ -78,7 +76,7 @@ class RescueApprovalService {
 
   Future<void> rejectRescueRequest(String requestId, String reviewerId) async {
     await _requestRef.doc(requestId).update({
-      'status': RescueRequestStatus.rejected.name,
+      'status': "rejected",
       "reviewedBy": reviewerId,
       "reviewedAt": FieldValue.serverTimestamp(),
     });

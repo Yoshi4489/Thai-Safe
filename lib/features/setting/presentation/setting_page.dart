@@ -12,10 +12,7 @@ class SettingPage extends ConsumerWidget {
     final currentUser = ref.watch(authControllerProvider).user;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Settings"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Settings"), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

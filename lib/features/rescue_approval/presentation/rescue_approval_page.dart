@@ -97,8 +97,8 @@ class _RescueApprovalPageState extends ConsumerState<RescueApprovalPage> {
               /// APPROVE
               Expanded(
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.check),
-                  label: const Text("Approve"),
+                  icon: const Icon(Icons.check, color: Colors.white,),
+                  label: const Text("Approve", style: TextStyle(color: Colors.white),),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                   ),
@@ -123,8 +123,8 @@ class _RescueApprovalPageState extends ConsumerState<RescueApprovalPage> {
               /// REJECT
               Expanded(
                 child: ElevatedButton.icon(
-                  icon: const Icon(Icons.close),
-                  label: const Text("Reject"),
+                  icon: const Icon(Icons.close, color: Colors.white,),
+                  label: const Text("Reject", style: TextStyle(color: Colors.white),),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                   onPressed: () async {
                     await service.rejectRescueRequest(request.id, "admin");
