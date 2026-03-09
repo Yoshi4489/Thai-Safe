@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/features/rescue_approval/data/resque_request_model.dart';
 import 'package:thai_safe/features/rescue_approval/provider/rescue_approval_provider.dart';
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
+import 'package:thai_safe/core/widgets/skeleton_loading.dart';
 
 class RescueApprovalPage extends ConsumerStatefulWidget {
   const RescueApprovalPage({super.key});
@@ -32,7 +33,12 @@ class _RescueApprovalPageState extends ConsumerState<RescueApprovalPage> {
           builder: (context) {
             /// Loading
             if (state.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return ListView.separated(
+                padding: const EdgeInsets.all(16),
+                itemCount: 4,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) => SkeletonRescueApprovalCard(),
+              );
             }
 
             /// Error

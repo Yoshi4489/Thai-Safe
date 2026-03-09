@@ -8,6 +8,7 @@ import 'package:thai_safe/features/incidents/controllers/incident_controller.dar
 import 'package:thai_safe/features/incidents/data/incident_model.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/incident_details_page.dart';
 import 'package:thai_safe/features/incidents/presentation/pages/report_incident_page.dart';
+import 'package:thai_safe/core/widgets/skeleton_loading.dart';
 import 'notification_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -137,11 +138,12 @@ class _HomePageState extends ConsumerState<HomePage> {
             const SizedBox(height: 16),
 
             incidentController.isLoading
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(
-                        color: Colors.blueAccent,
+                ? Column(
+                    children: List.generate(
+                      3,
+                      (index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: SkeletonIncidentCard(),
                       ),
                     ),
                   )

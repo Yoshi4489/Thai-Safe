@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/features/admin/provider/admin_state_provider.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/incident_details_page.dart';
+import 'package:thai_safe/core/widgets/skeleton_loading.dart';
 
 class AdminHomePage extends ConsumerStatefulWidget {
   Function(int) onNavigate;
@@ -103,21 +104,32 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
 
   Widget _dashboardStats(WidgetRef ref) {
     final incidentController = ref.watch(adminIncidentControllerProvider);
+    
+    if (incidentController.isLoading) {
+      return Row(
+        children: [
+          Expanded(child: SkeletonStatCard()),
+          const SizedBox(width: 10),
+          Expanded(child: SkeletonStatCard()),
+          const SizedBox(width: 10),
+          Expanded(child: SkeletonStatCard()),
+        ],
+      );
+    }
+    
     return Row(
       children: [
         Expanded(
           child: _statCard(
             "Incidents",
-            incidentController.isLoading
-                ? CircularProgressIndicator()
-                : Text(
-                    incidentController.totalIncidents.toString(),
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                    ),
-                  ),
+            Text(
+              incidentController.totalIncidents.toString(),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
             Colors.red,
           ),
         ),
@@ -125,16 +137,14 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
         Expanded(
           child: _statCard(
             "Pending",
-            incidentController.isLoading
-                ? CircularProgressIndicator()
-                : Text(
-                    incidentController.pendingIncidents.toString(),
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.orange,
-                    ),
-                  ),
+            Text(
+              incidentController.pendingIncidents.toString(),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.orange,
+              ),
+            ),
             Colors.orange,
           ),
         ),
@@ -142,16 +152,14 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
         Expanded(
           child: _statCard(
             "Resolved",
-            incidentController.isLoading
-                ? CircularProgressIndicator()
-                : Text(
-                    incidentController.resolvedIncidents.toString(),
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
+            Text(
+              incidentController.resolvedIncidents.toString(),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
             Colors.green,
           ),
         ),
@@ -225,7 +233,15 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
     final adminIncident = ref.watch(adminIncidentControllerProvider);
 
     if (adminIncident.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return Column(
+        children: List.generate(
+          3,
+          (index) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: SkeletonListTile(),
+          ),
+        ),
+      );
     }
 
     if (adminIncident.recentIncidents.isEmpty) {

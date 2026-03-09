@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:thai_safe/features/incident_management/provider/incident_management_state_provider.dart';
 import 'package:thai_safe/features/incidents/data/incident_model.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/incident_details_page.dart';
+import 'package:thai_safe/core/widgets/skeleton_loading.dart';
 
 class IncidentManagementPage extends ConsumerStatefulWidget {
   const IncidentManagementPage({super.key});
@@ -145,7 +146,12 @@ class _IncidentManagementPageState
                     .loadIncidentByStatus(selectedStatus);
               },
               child: incidentManagementController.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: 5,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) => SkeletonIncidentManagementCard(),
+                    )
                   : _incidentCard(
                       context,
                       getCurrentIncidents(incidentManagementController),
