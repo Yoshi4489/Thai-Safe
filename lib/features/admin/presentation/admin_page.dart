@@ -171,7 +171,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
         _actionTile(
           icon: Icons.warning_amber_rounded,
           title: "Manage Incidents",
-          subtitle: "View and update incident status",
+          subtitle: "จัดการเหตุการณ์ที่รายงานเข้ามา",
           onTap: () {
             setState(() {
               widget.onNavigate(1);
@@ -182,7 +182,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
         _actionTile(
           icon: Icons.verified_user,
           title: "Rescue Approval",
-          subtitle: "Approve rescue team accounts",
+          subtitle: "อนุมัติบัญชีทีมช่วยเหลือ",
           onTap: () {
             widget.onNavigate(2);
           },
@@ -260,7 +260,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
               ),
               title: Text("${recentIncident.title}"),
               subtitle: Text(
-                "Status: ${recentIncident.status}",
+                "สถานะ: ${recentIncident.status}",
                 style: TextStyle(
                   color: incidentStatus[recentIncident.status] ?? Colors.black,
                 ),
