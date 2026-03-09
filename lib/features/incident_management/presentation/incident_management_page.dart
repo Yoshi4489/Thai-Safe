@@ -138,12 +138,19 @@ class _IncidentManagementPageState
 
           /// INCIDENT LIST
           Expanded(
-            child: incidentManagementController.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _incidentCard(
-                    context,
-                    getCurrentIncidents(incidentManagementController),
-                  ),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await ref
+                    .read(incidentManagementControllerProvider.notifier)
+                    .loadIncidentByStatus(selectedStatus);
+              },
+              child: incidentManagementController.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _incidentCard(
+                      context,
+                      getCurrentIncidents(incidentManagementController),
+                    ),
+            ),
           ),
         ],
       ),

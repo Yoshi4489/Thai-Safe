@@ -23,9 +23,13 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
         automaticallyImplyLeading: false,
         title: const Text("Admin Dashboard", style: TextStyle(fontSize: 14)),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref.read(adminIncidentControllerProvider.notifier).loadIncidentsData();
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// ADMIN WELCOME
@@ -68,6 +72,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
             _recentIncidents(),
           ],
         ),
+      ),
       ),
     );
   }

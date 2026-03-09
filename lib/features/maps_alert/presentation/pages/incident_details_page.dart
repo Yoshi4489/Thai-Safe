@@ -18,6 +18,37 @@ class IncidentDetailsPage extends ConsumerStatefulWidget {
 
 class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
   String? _selectedStatus;
+  dynamic _currentIncident;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIncident = widget.incident;
+  }
+
+  Future<void> _refreshIncidentData() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('incidents')
+          .doc(widget.incident.id)
+          .get();
+
+      if (doc.exists && mounted) {
+        setState(() {
+          _currentIncident = doc.data();
+          if (_currentIncident != null) {
+            _currentIncident['id'] = doc.id;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error refreshing: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
 
 // ฟังก์ชันยืนยันการเปลี่ยนสถานะ
   Future<bool> _confirmStatusChange(BuildContext context, String newStatus) async {
@@ -301,14 +332,14 @@ class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
     final bool isRescue = currentUser?.role == 'rescue' || currentUser?.role == 'RESCUER' || currentUser?.role == 'admin' || currentUser?.role == 'ADMIN';
 
     // เช็ครูปภาพ
-    final List<dynamic> imageUrls = widget.incident.imageUrls ?? [];
+    final List<dynamic> imageUrls = _currentIncident.imageUrls ?? [];
     final String coverPhoto = imageUrls.isNotEmpty
         ? imageUrls.first
         : 'https://via.placeholder.com/400x300.png?text=No+Image';
 
     final LatLng incidentLocation = LatLng(
-      widget.incident.latitude,
-      widget.incident.longitude,
+      _currentIncident.latitude,
+      _currentIncident.longitude,
     );
 
     return Scaffold(
@@ -318,7 +349,9 @@ class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
         foregroundColor: Colors.black,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: RefreshIndicator(
+        onRefresh: _refreshIncidentData,
+        child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -387,13 +420,13 @@ class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Chip(
-                        label: Text(_getIncidentTypeName(widget.incident.type)),
+                        label: Text(_getIncidentTypeName(_currentIncident.type ?? _currentIncident['type'])),
                         backgroundColor: Colors.blue.shade50,
                         labelStyle: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold),
                       ),
                       // ✅ แสดงผลสถานะเป็นภาษาไทย
                       Chip(
-                        label: Text(_getThaiStatus(widget.incident.status)),
+                        label: Text(_getThaiStatus(_currentIncident.status ?? _currentIncident['status'])),
                         backgroundColor: Colors.green.shade50,
                         labelStyle: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.bold),
                       ),
@@ -402,7 +435,7 @@ class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
                   const SizedBox(height: 8),
 
                   Text(
-                    widget.incident.title ?? 'ไม่มีหัวข้อ',
+                    _currentIncident.title ?? _currentIncident['title'] ?? 'ไม่มีหัวข้อ',
                     style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -419,9 +452,9 @@ class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('แจ้งโดย: ${widget.incident.reporterName}'),
-                              Text('เบอร์ติดต่อ: ${widget.incident.reporterTel}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                              Text('เวลา: ${_formatThaiDate(widget.incident.createdAt)}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                              Text('แจ้งโดย: ${_currentIncident.reporterName ?? _currentIncident['reporter_name']}'),
+                              Text('เบอร์ติดต่อ: ${_currentIncident.reporterTel ?? _currentIncident['reporter_tel']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text('เวลา: ${_formatThaiDate(_currentIncident.createdAt ?? _currentIncident['created_at'])}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                             ],
                           ),
                         ),
@@ -435,7 +468,7 @@ class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
                   const Divider(),
                   const SizedBox(height: 12),
                   
-                  ..._buildDetailsList(widget.incident.details ?? {}),
+                  ..._buildDetailsList(_currentIncident.details ?? _currentIncident['details'] ?? {}),
 
                   const SizedBox(height: 24),
 
@@ -466,7 +499,7 @@ class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
                   const SizedBox(height: 40),
 
                   // เช็คเงื่อนไข: ซ่อนปุ่มถ้าสถานะเป็น 'สำเร็จ' (Resolved) หรือ 'ยกเลิก' (Cancelled)
-                  if (isRescue && widget.incident.status != 'Resolved' && widget.incident.status != 'Cancelled') ...[
+                  if (isRescue && (_currentIncident.status ?? _currentIncident['status']) != 'Resolved' && (_currentIncident.status ?? _currentIncident['status']) != 'Cancelled') ...[
                     const Divider(),
                     const SizedBox(height: 8),
                     const Text('ส่วนปฏิบัติการของผู้ช่วยเหลือ (Rescue)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
@@ -531,6 +564,7 @@ class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
