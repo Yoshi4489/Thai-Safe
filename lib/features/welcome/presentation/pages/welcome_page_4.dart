@@ -32,7 +32,7 @@ class WelcomePage4 extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             const Text(
-              "ระบบรับความช่วยเหลือที่เสถียรออกแบบถูกต้องตามหลักวิศวกรรมดิจิทัล",
+              "มุ่งมั่นสร้างความปลอดภัยเพื่อประชาชน",
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.normal,

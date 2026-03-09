@@ -57,7 +57,7 @@ class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
       builder: (context) => AlertDialog(
         title: const Text("ยืนยันการเปลี่ยนสถานะ"),
         content: Text(
-          "คุณแน่ใจหรือไม่ที่จะเปลี่ยนสถานะเป็น '${_getThaiStatus(newStatus)}'?",
+          "คุณแน่ใจหรือไม่ที่จะเปลี่ยนสถานะเป็น ${_getThaiStatus(newStatus)}?",
         ),
         actions: [
           TextButton(
