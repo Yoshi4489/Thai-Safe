@@ -17,6 +17,7 @@ class IncidentModel {
   final String urgency;
   final DateTime createdAt;
   final List<String> imageUrls;
+  final List<String> followers;
 
   IncidentModel({
     required this.id,
@@ -34,6 +35,7 @@ class IncidentModel {
     required this.urgency,
     required this.createdAt,
     required this.imageUrls,
+    required this.followers,
   });
 
   Map<String, dynamic> toMap() {
@@ -55,6 +57,7 @@ class IncidentModel {
       'urgency': urgency,
       'created_at': Timestamp.fromDate(createdAt),
       'image_urls': imageUrls,
+      'followers': followers,
     };
   }
 
@@ -86,6 +89,7 @@ class IncidentModel {
       createdAt:
           (map['created_at'] as Timestamp?)?.toDate() ?? DateTime.now(),
       imageUrls: List<String>.from(map['image_urls'] ?? []),
+      followers: List<String>.from(map['followers'] ?? []),
     );
   }
 }

@@ -40,24 +40,6 @@ class _WelcomePageState extends State<WelcomePage> {
         actions: [
           ElevatedButton(
             onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const MapAlertPage()),
-              );
-            },
-            child: const Text(
-              'By Pass',
-              style: TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          ElevatedButton(
-            onPressed: () {
               Navigator.pushReplacementNamed(context, '/sign-up');
             },
             child: Text(

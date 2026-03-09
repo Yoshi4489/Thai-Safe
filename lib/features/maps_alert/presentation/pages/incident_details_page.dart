@@ -2,29 +2,87 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class IncidentDetailsPage extends StatelessWidget {
-  final dynamic incident; // รับค่า Model เข้ามา
+// นำเข้า Auth Provider (ปรับ path ให้ตรงกับโปรเจกต์ของคุณ)
+import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
+
+class IncidentDetailsPage extends ConsumerWidget { 
+  final dynamic incident; 
 
   const IncidentDetailsPage({super.key, required this.incident});
+
+// อัปเดตฟังก์ชันนี้ เพื่อบันทึกแจ้งเตือนลง Firebase ด้วย
+  Future<void> _updateIncidentStatus(BuildContext context, String newStatus, String agencyName) async {
+    try {
+      showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+      
+      Map<String, dynamic> updatedDetails = Map.from(incident.details ?? {});
+      updatedDetails['action_by'] = agencyName;
+      updatedDetails['action_time'] = DateTime.now().toIso8601String();
+
+      Map<String, dynamic> updateData = {
+        'status': newStatus, 
+        'description': jsonEncode(updatedDetails),
+      };
+
+      if (newStatus == 'Resolved' || newStatus == 'Cancelled') {
+        updateData['resolved_at'] = FieldValue.serverTimestamp();
+      }
+
+      // 1. อัปเดตสถานะเหตุการณ์ (เหมือนเดิม)
+      await FirebaseFirestore.instance.collection('incidents').doc(incident.id).update(updateData);
+      
+      // 2. สร้างแจ้งเตือน (Notification)
+      // ดึงรายชื่อคนติดตามมา ถ้ามีคนติดตามอยู่ ถึงจะสร้างแจ้งเตือน
+      final List<dynamic> followers = incident.followers ?? [];
+      if (followers.isNotEmpty) {
+        await FirebaseFirestore.instance.collection('notifications').add({
+          'incident_id': incident.id,
+          'incident_title': incident.title,
+          'status': newStatus, // เช่น Acknowledged, In Progress
+          'action_by': agencyName,
+          'timestamp': FieldValue.serverTimestamp(),
+          'target_users': followers, // ส่งหา Follower ทุกคน
+          'read_by': [], // เก็บรายชื่อคนที่กดอ่านแล้ว (เริ่มแรกเป็นลิสต์ว่าง)
+        });
+      }
+
+      if (context.mounted) {
+        Navigator.pop(context); 
+        Navigator.pop(context); 
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('อัปเดตสถานะและส่งแจ้งเตือนเรียบร้อย'), backgroundColor: Colors.green));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      }
+    }
+  }
+
+  // ฟังก์ชันแปลสถานะอังกฤษจากฐานข้อมูล กลับมาโชว์เป็นภาษาไทยให้ผู้ใช้เห็น
+  String _getThaiStatus(String? status) {
+    switch (status) {
+      case 'Pending': return 'รอดำเนินการ';
+      case 'Acknowledged': return 'รับเรื่องแล้ว';
+      case 'In Progress': return 'กำลังดำเนินการ';
+      case 'Resolved': return 'สำเร็จ';
+      case 'Cancelled': return 'ยกเลิก';
+      default: return status ?? 'Pending';
+    }
+  }
 
   // ฟังก์ชันแปลงประเภทเหตุเป็นภาษาไทย
   String _getIncidentTypeName(String type) {
     switch (type.toLowerCase()) {
-      case 'fire':
-        return '🔥 อัคคีภัย (ไฟไหม้)';
-      case 'flood':
-        return '🌊 อุทกภัย (น้ำท่วม)';
-      case 'collapse':
-        return '🏢 อาคารถล่ม/แผ่นดินไหว';
-      case 'chemical':
-        return '🧪 สารเคมีรั่วไหล';
-      case 'violence':
-        return '⚠️ เหตุร้าย/ความรุนแรง';
-      case 'other':
-        return '🆘 เหตุอื่นๆ';
-      default:
-        return '⚠️ เหตุอื่นๆ ($type)';
+      case 'fire': return '🔥 อัคคีภัย (ไฟไหม้)';
+      case 'flood': return '🌊 อุทกภัย (น้ำท่วม)';
+      case 'collapse': return '🏢 อาคารถล่ม/แผ่นดินไหว';
+      case 'chemical': return '🧪 สารเคมีรั่วไหล';
+      case 'violence': return '⚠️ เหตุร้าย/ความรุนแรง';
+      case 'other': return '🆘 เหตุอื่นๆ';
+      default: return '⚠️ เหตุอื่นๆ ($type)';
     }
   }
 
@@ -70,7 +128,6 @@ class IncidentDetailsPage extends StatelessWidget {
 
     List<Widget> widgets = [];
     details.forEach((key, value) {
-      // ข้ามถ้าค่าว่าง หรือเป็น null หรือเป็น Array ว่าง
       if (value == null || value.toString().trim().isEmpty || value.toString() == 'null' || value.toString() == '[]') return;
 
       String cleanKey = key.trim();
@@ -78,7 +135,6 @@ class IncidentDetailsPage extends StatelessWidget {
       String thValue = value.toString();
 
       switch (cleanKey) {
-        // ================= ทั่วไป / อัคคีภัย / อุทกภัย =================
         case 'fire_type': thKey = 'ลักษณะที่เกิดเหตุ'; break;
         case 'status': thKey = 'สถานการณ์'; break;
         case 'has_people_waiting':
@@ -119,15 +175,11 @@ class IncidentDetailsPage extends StatelessWidget {
             thValue = 'ไม่มี';
           }
           break;
-
-        // ================= สารเคมีรั่วไหล =================
         case 'characteristics': thKey = 'ลักษณะสารเคมี'; break;
         case 'color': thKey = 'สี'; break;
         case 'symptoms': thKey = 'อาการผู้ได้รับผลกระทบ'; break;
         case 'wind_direction': thKey = 'ทิศทางลม'; break;
         case 'affected_area': thKey = 'พื้นที่ได้รับผลกระทบ'; break;
-
-        // ================= เหตุร้าย / กราดยิง / ความรุนแรง =================
         case 'type': thKey = 'ลักษณะเหตุการณ์'; break;
         case 'weapon': thKey = 'อาวุธที่ใช้'; break;
         case 'suspect_status': thKey = 'สถานะผู้ก่อเหตุ'; break;
@@ -135,21 +187,13 @@ class IncidentDetailsPage extends StatelessWidget {
         case 'suspect_info': thKey = 'รูปพรรณผู้ก่อเหตุ'; break;
         case 'injury_type': thKey = 'ลักษณะบาดแผล'; break;
         case 'reporter_safety': thKey = 'สถานะความปลอดภัยผู้แจ้ง'; break;
-
-        // ================= อาคารถล่ม / แผ่นดินไหว =================
         case 'feeling': thKey = 'การรับรู้ถึงแรงสั่นสะเทือน'; break;
         case 'damage': thKey = 'ความเสียหายของอาคาร'; break;
         case 'secondary_risk': thKey = 'ความเสี่ยงซ้ำซ้อน'; break;
         case 'utilities_status':
           thKey = 'ระบบสาธารณูปโภค';
-          if (value is List) {
-            thValue = value.join(', ');
-          } else if (value is String) {
-            thValue = value.replaceAll('[', '').replaceAll(']', '');
-          }
+          if (value is List) { thValue = value.join(', '); } else if (value is String) { thValue = value.replaceAll('[', '').replaceAll(']', ''); }
           break;
-
-        // ================= ข้อมูลผู้บาดเจ็บ / ผลกระทบ (ใช้ร่วมกันหลายเหตุ) =================
         case 'has_injured':
           thKey = 'ผู้บาดเจ็บ';
           thValue = (value == true || value.toString().toLowerCase() == 'true') ? 'มี' : 'ไม่มี';
@@ -174,18 +218,12 @@ class IncidentDetailsPage extends StatelessWidget {
         case 'building_floors':
           if (value == 0 || value.toString() == '0') return;
           thKey = 'จำนวนชั้นอาคาร'; thValue = '$value ชั้น'; break;
-
-        // ================= อื่น ๆ =================
         case 'nearby_risk': thKey = 'ความเสี่ยงพื้นที่ข้างเคียง'; break;
         case 'water_source': thKey = 'แหล่งน้ำใกล้เคียง'; break;
         case 'extra_note': thKey = 'หมายเหตุเพิ่มเติม'; break;
         case 'urgent_needs':
           thKey = 'ต้องการความช่วยเหลือด่วน';
-          if (value is List) {
-            thValue = value.join(', ');
-          } else if (value is String) {
-            try { thValue = jsonDecode(value).join(', '); } catch (_) {}
-          }
+          if (value is List) { thValue = value.join(', '); } else if (value is String) { try { thValue = jsonDecode(value).join(', '); } catch (_) {} }
           break;
         case 'action_by': thKey = 'เจ้าหน้าที่รับเรื่อง'; break;
         case 'action_time':
@@ -207,10 +245,7 @@ class IncidentDetailsPage extends StatelessWidget {
                   text: TextSpan(
                     style: const TextStyle(color: Colors.black87, fontSize: 15, height: 1.4),
                     children: [
-                      TextSpan(
-                        text: '$thKey: ',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      TextSpan(text: '$thKey: ', style: const TextStyle(fontWeight: FontWeight.bold)),
                       TextSpan(text: thValue),
                     ],
                   ),
@@ -225,7 +260,10 @@ class IncidentDetailsPage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(authControllerProvider).user;
+    final bool isRescue = currentUser?.role == 'rescue' || currentUser?.role == 'RESCUER' || currentUser?.role == 'admin' || currentUser?.role == 'ADMIN' || currentUser?.role == 'officer';
+
     // เช็ครูปภาพ
     final List<dynamic> imageUrls = incident.imageUrls ?? [];
     final String coverPhoto = imageUrls.isNotEmpty
@@ -254,16 +292,13 @@ class IncidentDetailsPage extends StatelessWidget {
                 showDialog(
                   context: context,
                   builder: (_) => Dialog(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Image.network(
                         coverPhoto,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) =>
-                            const Icon(Icons.broken_image, size: 80),
+                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 80),
                       ),
                     ),
                   ),
@@ -277,13 +312,7 @@ class IncidentDetailsPage extends StatelessWidget {
                 errorBuilder: (ctx, err, stack) => Container(
                   height: 250,
                   color: Colors.grey.shade300,
-                  child: const Center(
-                    child: Icon(
-                      Icons.broken_image,
-                      size: 50,
-                      color: Colors.grey,
-                    ),
-                  ),
+                  child: const Center(child: Icon(Icons.broken_image, size: 50, color: Colors.grey)),
                 ),
               ),
             ),
@@ -324,18 +353,13 @@ class IncidentDetailsPage extends StatelessWidget {
                       Chip(
                         label: Text(_getIncidentTypeName(incident.type)),
                         backgroundColor: Colors.blue.shade50,
-                        labelStyle: TextStyle(
-                          color: Colors.blue.shade800,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        labelStyle: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold),
                       ),
+                      // ✅ แสดงผลสถานะเป็นภาษาไทย
                       Chip(
-                        label: Text(incident.status ?? 'Pending'),
+                        label: Text(_getThaiStatus(incident.status)),
                         backgroundColor: Colors.green.shade50,
-                        labelStyle: TextStyle(
-                          color: Colors.green.shade800,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        labelStyle: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
@@ -343,20 +367,14 @@ class IncidentDetailsPage extends StatelessWidget {
 
                   Text(
                     incident.title ?? 'ไม่มีหัวข้อ',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
 
                   // 3. ข้อมูลผู้แจ้ง และ เวลา
                   Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                    decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
                     child: Row(
                       children: [
                         const Icon(Icons.person, color: Colors.grey),
@@ -366,19 +384,8 @@ class IncidentDetailsPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('แจ้งโดย: ${incident.reporterName}'),
-                              Text(
-                                'เบอร์ติดต่อ: ${incident.reporterTel}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                'เวลา: ${_formatThaiDate(incident.createdAt)}',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 12,
-                                ),
-                              ),
+                              Text('เบอร์ติดต่อ: ${incident.reporterTel}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text('เวลา: ${_formatThaiDate(incident.createdAt)}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                             ],
                           ),
                         ),
@@ -388,23 +395,16 @@ class IncidentDetailsPage extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   // 4. รายละเอียดที่ฟอร์แมตแล้ว
-                  const Text(
-                    'ข้อมูลเพิ่มเติม',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                  const Text('ข้อมูลเพิ่มเติม', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const Divider(),
                   const SizedBox(height: 12),
                   
-                  // ดึงข้อมูลผ่าน _buildDetailsList ที่อัปเดตแล้ว
                   ..._buildDetailsList(incident.details ?? {}),
 
                   const SizedBox(height: 24),
 
                   // 5. แผนที่ขนาดเล็กแสดงจุดเกิดเหตุ
-                  const Text(
-                    'จุดเกิดเหตุ',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                  const Text('จุดเกิดเหตุ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const Divider(),
                   const SizedBox(height: 8),
                   ClipRRect(
@@ -413,20 +413,14 @@ class IncidentDetailsPage extends StatelessWidget {
                       height: 200,
                       width: double.infinity,
                       child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: incidentLocation,
-                          zoom: 16,
-                        ),
+                        initialCameraPosition: CameraPosition(target: incidentLocation, zoom: 16),
                         markers: {
                           Marker(
                             markerId: const MarkerId('incident_loc'),
                             position: incidentLocation,
-                            icon: BitmapDescriptor.defaultMarkerWithHue(
-                              BitmapDescriptor.hueRed,
-                            ),
+                            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
                           ),
                         },
-                        // ปิดการเลื่อนแผนที่ เพื่อไม่ให้ชนกับการ Scroll ของหน้าเพจ
                         scrollGesturesEnabled: false,
                         zoomGesturesEnabled: false,
                         myLocationButtonEnabled: false,
@@ -434,6 +428,62 @@ class IncidentDetailsPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 40),
+
+                  // เช็คเงื่อนไข: ซ่อนปุ่มถ้าสถานะเป็น 'สำเร็จ' (Resolved) หรือ 'ยกเลิก' (Cancelled)
+                  if (isRescue && incident.status != 'Resolved' && incident.status != 'Cancelled') ...[
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    const Text('ส่วนปฏิบัติการของผู้ช่วยเหลือ (Rescue)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                    const SizedBox(height: 12),
+                    
+                    // แถวที่ 1: รับเรื่อง และ กำลังดำเนินการ
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+                            onPressed: incident.status == 'Acknowledged' || incident.status == 'In Progress' 
+                                ? null 
+                                : () => _updateIncidentStatus(context, 'Acknowledged', currentUser?.firstName ?? 'Rescue'),
+                            child: const Text('รับเรื่อง'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, foregroundColor: Colors.white),
+                            onPressed: incident.status == 'In Progress' 
+                                ? null 
+                                : () => _updateIncidentStatus(context, 'In Progress', currentUser?.firstName ?? 'Rescue'),
+                            child: const Text('กำลังดำเนินการ'), // แก้ข้อความให้ตรงกับ Model
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // แถวที่ 2: สำเร็จ และ ยกเลิกเคส
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+                            onPressed: () => _updateIncidentStatus(context, 'Resolved', currentUser?.firstName ?? 'Rescue'),
+                            child: const Text('สำเร็จ'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                            onPressed: () => _updateIncidentStatus(context, 'Cancelled', currentUser?.firstName ?? 'Rescue'),
+                            child: const Text('ยกเลิก'), // เพิ่มปุ่มยกเลิก
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 40),
+                  ],
                 ],
               ),
             ),

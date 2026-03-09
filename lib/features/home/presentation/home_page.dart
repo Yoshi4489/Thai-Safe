@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // นำเข้า Firestore สำหรับอ่านแจ้งเตือน
+
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 import 'package:thai_safe/features/incidents/controllers/incident_controller.dart';
 import 'package:thai_safe/features/incidents/data/incident_model.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/incident_details_page.dart';
 import 'package:thai_safe/features/incidents/presentation/pages/report_incident_page.dart';
+
+// ✅ อย่าลืมแก้ path นำเข้าหน้า NotificationPage ให้ตรงกับโฟลเดอร์ของคุณ
+import 'notification_page.dart'; 
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -59,6 +64,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final incidentController = ref.watch(incidentControllerProvider);
     final user = ref.watch(authControllerProvider).user;
+    
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -67,11 +73,78 @@ class _HomePageState extends ConsumerState<HomePage> {
           "สวัสดี ${user?.firstName ?? ''}",
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.notifications_none),
-          ),
+        // ✅ เปลี่ยน Action Bar ให้เป็นระบบ Notification Badge (กระดิ่งมีเลข)
+        actions: [
+          if (user != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: StreamBuilder<QuerySnapshot>(
+                // ดึงเฉพาะแจ้งเตือนที่เราติดตาม (มีชื่อเราใน target_users)
+                stream: FirebaseFirestore.instance
+                    .collection('notifications')
+                    .where('target_users', arrayContains: user.id)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  int unreadCount = 0;
+
+                  // นับจำนวนแจ้งเตือนที่ยังไม่ได้อ่าน
+                  if (snapshot.hasData) {
+                    for (var doc in snapshot.data!.docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final readBy = List<String>.from(data['read_by'] ?? []);
+                      // ถ้ายังไม่มีชื่อเราใน read_by แสดงว่ายังไม่ได้อ่าน
+                      if (!readBy.contains(user.id)) {
+                        unreadCount++;
+                      }
+                    }
+                  }
+
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_none, size: 28),
+                        onPressed: () {
+                          // ไปหน้า NotificationPage
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      // ถ้ามีแจ้งเตือนใหม่ ให้แสดงจุดสีแดงและตัวเลข
+                      if (unreadCount > 0)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            child: Text(
+                              unreadCount > 99 ? '99+' : '$unreadCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -101,7 +174,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
             const SizedBox(height: 12),
             incidentController.isLoading
-                ? Center(child: CircularProgressIndicator())
+                ? const Center(child: CircularProgressIndicator())
                 : _nearIncident(incidentController.nearbyIncidents),
 
             const SizedBox(height: 24),

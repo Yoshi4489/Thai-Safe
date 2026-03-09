@@ -103,7 +103,7 @@ class _RescueApprovalPageState extends ConsumerState<RescueApprovalPage> {
                     backgroundColor: Colors.green,
                   ),
                   onPressed: () async {
-                    await service.approveRescueRequest(request.id, "admin");
+                    await service.approveRescueRequest(request.id, "admin", request.userId);
 
                     if (!mounted) return;
 

@@ -2,10 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 import 'package:thai_safe/features/maps_alert/utils/incident_format_helper.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/incident_details_page.dart';
-
 
 class IncidentBottomSheet {
   
@@ -18,6 +16,11 @@ class IncidentBottomSheet {
     } catch (e) {
       debugPrint('User model check error: $e');
     }
+
+    // --- Logic เช็คสถานะการติดตาม ---
+    final List<dynamic> followers = incident.followers ?? [];
+    final bool isFollowing = currentUser != null && followers.contains(currentUser.id);
+    // ----------------------------
 
     final String coverPhoto = (incident.imageUrls != null && incident.imageUrls.isNotEmpty)
         ? incident.imageUrls.first 
@@ -109,7 +112,6 @@ class IncidentBottomSheet {
                       width: double.infinity,
                       decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
                       child: Text(
-                        // ส่วนแสดงผลเวลาแจ้ง
                         'ประเภทเหตุ: ${IncidentFormatHelper.getIncidentTypeName(incident.type)}\nเวลาแจ้ง: ${_formatThaiDate(incident.createdAt)}\n\n${IncidentFormatHelper.formatIncidentDetails(incident.details)}',
                         style: TextStyle(color: Colors.grey.shade800, fontSize: 13, height: 1.5),
                         maxLines: 5, overflow: TextOverflow.ellipsis,
@@ -124,20 +126,34 @@ class IncidentBottomSheet {
                           Expanded(
                             child: OutlinedButton.icon(
                               onPressed: () async {
-                                Navigator.pop(context);
                                 if (currentUser == null) return;
                                 try {
-                                  await FirebaseFirestore.instance.collection('users').doc(currentUser.uid)
-                                      .collection('followed_incidents').doc(incident.id).set({
-                                        'incident_id': incident.id, 'followed_at': FieldValue.serverTimestamp(),
-                                      });
-                                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('คุณได้ติดตามเหตุการณ์นี้แล้ว'), backgroundColor: Colors.green));
+                                  if (isFollowing) {
+                                    // เลิกติดตาม
+                                    await FirebaseFirestore.instance.collection('incidents').doc(incident.id).update({
+                                      'followers': FieldValue.arrayRemove([currentUser.id])
+                                    });
+                                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('เลิกติดตามเหตุการณ์นี้แล้ว')));
+                                  } else {
+                                    // ติดตาม
+                                    await FirebaseFirestore.instance.collection('incidents').doc(incident.id).update({
+                                      'followers': FieldValue.arrayUnion([currentUser.id])
+                                    });
+                                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('คุณได้ติดตามเหตุการณ์นี้แล้ว'), backgroundColor: Colors.green));
+                                  }
+                                  if (context.mounted) Navigator.pop(context); // ปิดเพื่อรีเฟรชข้อมูลหน้าหลัก
                                 } catch (e) {
                                   if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('เกิดข้อผิดพลาด: $e'), backgroundColor: Colors.red));
                                 }
                               },
-                              icon: const Icon(Icons.notifications_active), label: const Text('ติดตาม'),
-                              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+                              // เปลี่ยน Icon และ Text ตามสถานะ isFollowing
+                              icon: Icon(isFollowing ? Icons.notifications_off : Icons.notifications_active), 
+                              label: Text(isFollowing ? 'เลิกติดตาม' : 'ติดตาม'),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                side: BorderSide(color: isFollowing ? Colors.grey : Colors.blue),
+                                foregroundColor: isFollowing ? Colors.grey.shade700 : Colors.blue,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -224,7 +240,6 @@ class IncidentBottomSheet {
                 }
                 Navigator.pop(ctx); 
                 try {
-                  // เช็คก่อนว่า details เป็น Map หรือ String แล้วแปลงให้ถูกต้อง
                   Map<String, dynamic> updatedDetails = {};
                   if (incident.details is Map) {
                     updatedDetails = Map<String, dynamic>.from(incident.details);
@@ -237,8 +252,6 @@ class IncidentBottomSheet {
 
                   await FirebaseFirestore.instance.collection('incidents').doc(incident.id).update({
                     'status': actionStatus,
-                    // หากฐานข้อมูลคุณเก็บเป็น String JSON ก็ใช้ jsonEncode(updatedDetails)
-                    // หากเก็บเป็น Map ก็ส่ง updatedDetails ไปตรง ๆ
                     'description': jsonEncode(updatedDetails), 
                   });
                   if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('อัปเดตสถานะเป็น "$actionStatus" โดย $agency แล้ว'), backgroundColor: Colors.green));
@@ -255,12 +268,9 @@ class IncidentBottomSheet {
     );
   }
 
-  // ฟังก์ชันแปลงวันที่
   static String _formatThaiDate(dynamic dateInput) {
     if (dateInput == null) return '-';
     DateTime? dt;
-    
-    // ตรวจสอบชนิดของตัวแปรวันที่ที่ได้มาจาก Firebase
     if (dateInput is Timestamp) {
       dt = dateInput.toDate();
     } else if (dateInput is DateTime) {
@@ -268,15 +278,12 @@ class IncidentBottomSheet {
     } else if (dateInput is String) {
       dt = DateTime.tryParse(dateInput);
     }
-    
     if (dt == null) return dateInput.toString();
-    
     final day = dt.day.toString().padLeft(2, '0');
     final month = dt.month.toString().padLeft(2, '0');
-    final year = dt.year + 543; // แปลงเป็น พ.ศ.
+    final year = dt.year + 543;
     final hour = dt.hour.toString().padLeft(2, '0');
     final minute = dt.minute.toString().padLeft(2, '0');
-    
     return '$day/$month/$year เวลา $hour:$minute น.';
   }
 }

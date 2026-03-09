@@ -96,6 +96,7 @@ class IncidentController extends StateNotifier<IncidentState> {
         urgency: urgency,
         createdAt: DateTime.now(),
         imageUrls: imageUrls ?? [],
+        followers: [userId],
       );
 
       // ส่งไป Service เพื่อบันทึกลง Database
