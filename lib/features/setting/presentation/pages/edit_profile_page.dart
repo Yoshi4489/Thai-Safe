@@ -70,9 +70,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     color: Colors.blue.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.photo_library_rounded, color: Colors.blue),
+                  child: const Icon(
+                    Icons.photo_library_rounded,
+                    color: Colors.blue,
+                  ),
                 ),
-                title: const Text("เลือกจากแกลเลอรี", style: TextStyle(fontWeight: FontWeight.w500)),
+                title: const Text(
+                  "เลือกจากแกลเลอรี",
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
@@ -85,9 +91,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     color: Colors.teal.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.camera_alt_rounded, color: Colors.teal),
+                  child: const Icon(
+                    Icons.camera_alt_rounded,
+                    color: Colors.teal,
+                  ),
                 ),
-                title: const Text("ถ่ายภาพ", style: TextStyle(fontWeight: FontWeight.w500)),
+                title: const Text(
+                  "ถ่ายภาพ",
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.camera);
@@ -222,8 +234,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                     onTap: () async {
                       _showImageSourceActionSheet();
                       if (_imageFile != null) {
-                        final res =
-                            await cloudProvider.uploadImage(_imageFile!);
+                        final res = await cloudProvider.uploadImage(
+                          _imageFile!,
+                        );
                         if (res.isNotEmpty && mounted) {
                           ref
                               .read(authControllerProvider.notifier)
@@ -249,12 +262,14 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                             backgroundColor: Colors.white,
                             backgroundImage:
                                 authController.user?.profile_url != null
-                                    ? NetworkImage(
-                                        authController.user!.profile_url)
-                                    : null,
+                                ? NetworkImage(authController.user!.profile_url)
+                                : null,
                             child: authController.user?.profile_url == null
-                                ? const Icon(Icons.person_rounded,
-                                    size: 50, color: Colors.grey)
+                                ? const Icon(
+                                    Icons.person_rounded,
+                                    size: 50,
+                                    color: Colors.grey,
+                                  )
                                 : null,
                           ),
                         ),
@@ -291,11 +306,9 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   const SizedBox(height: 4),
                   Text(
                     PhoneValidator.convertToNormalPhone(
-                        authController.user?.tel ?? "-"),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
+                      authController.user?.tel ?? "-",
                     ),
+                    style: const TextStyle(fontSize: 16, color: Colors.black54),
                   ),
                 ],
               ),
@@ -313,7 +326,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             _buildSectionCard(
               children: [
                 _buildBloodTypeDropdown(),
-                const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF5F5F5),
+                ),
                 _buildModernTextField(
                   controller: chronic_diseases_controller,
                   icon: Icons.health_and_safety_rounded,
@@ -321,7 +338,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   label: "โรคประจำตัว",
                   hint: "เช่น เบาหวาน, ความดัน, หอบหืด",
                 ),
-                const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF5F5F5),
+                ),
                 _buildModernTextField(
                   controller: regular_medications_controller,
                   icon: Icons.medication_rounded,
@@ -329,7 +350,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   label: "ยาประจำ",
                   hint: "เช่น Insulin, Ventolin",
                 ),
-                const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF5F5F5),
+                ),
                 _buildModernTextField(
                   controller: allergies_controller,
                   icon: Icons.warning_rounded,
@@ -353,7 +378,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   label: "ชื่อผู้ติดต่อ 1",
                   hint: "ชื่อ – นามสกุล",
                 ),
-                const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF5F5F5),
+                ),
                 _buildModernTextField(
                   controller: contact_tel_controller_one,
                   icon: Icons.phone_rounded,
@@ -376,7 +405,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                   label: "ชื่อผู้ติดต่อ 2 (ถ้ามี)",
                   hint: "ชื่อ – นามสกุล",
                 ),
-                const Divider(height: 1, thickness: 1, color: Color(0xFFF5F5F5)),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Color(0xFFF5F5F5),
+                ),
                 _buildModernTextField(
                   controller: contact_tel_controller_two,
                   icon: Icons.phone_outlined,
@@ -411,12 +444,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         List<Map<String, dynamic>> contacts = [];
 
                         if (!PhoneValidator.isValidThaiPhone(
-                                contact_tel_controller_one.text) &&
+                              contact_tel_controller_one.text,
+                            ) &&
                             contact_tel_controller_one.text.isNotEmpty) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('เบอร์โทรศัพท์ผู้ติดต่อ 1 ไม่ถูกต้อง'),
+                                content: Text(
+                                  'เบอร์โทรศัพท์ผู้ติดต่อ 1 ไม่ถูกต้อง',
+                                ),
                                 backgroundColor: Colors.redAccent,
                               ),
                             );
@@ -425,12 +461,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                         }
 
                         if (!PhoneValidator.isValidThaiPhone(
-                                contact_tel_controller_two.text) &&
+                              contact_tel_controller_two.text,
+                            ) &&
                             contact_tel_controller_two.text.isNotEmpty) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('เบอร์โทรศัพท์ผู้ติดต่อ 2 ไม่ถูกต้อง'),
+                                content: Text(
+                                  'เบอร์โทรศัพท์ผู้ติดต่อ 2 ไม่ถูกต้อง',
+                                ),
                                 backgroundColor: Colors.redAccent,
                               ),
                             );
@@ -455,10 +494,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
                         final profile = MedicalProfileModel(
                           user_id: authController.user!.id,
-                          chronic_diseases:
-                              chronic_diseases_controller.text.trim(),
-                          regular_medications:
-                              regular_medications_controller.text.trim(),
+                          chronic_diseases: chronic_diseases_controller.text
+                              .trim(),
+                          regular_medications: regular_medications_controller
+                              .text
+                              .trim(),
                           allergies: allergies_controller.text.trim(),
                           blood_type: _selectedBloodType ?? "",
                           contact_list: contacts,
@@ -475,11 +515,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                                 content: const Text('บันทึกข้อมูลสำเร็จ!'),
                                 backgroundColor: Colors.green[600],
                                 behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             );
                             // Optionally pop the page after saving
-                            // Navigator.pop(context); 
+                            // Navigator.pop(context);
                           }
                         } catch (e) {
                           if (mounted) {
@@ -532,9 +574,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
           ),
         ],
       ),
-      child: Column(
-        children: children,
-      ),
+      child: Column(children: children),
     );
   }
 
@@ -549,7 +589,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline_rounded, color: Colors.blueAccent.shade700, size: 28),
+          Icon(
+            Icons.info_outline_rounded,
+            color: Colors.blueAccent.shade700,
+            size: 28,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
@@ -579,7 +623,11 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               color: Colors.redAccent.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.bloodtype_rounded, size: 24, color: Colors.redAccent),
+            child: const Icon(
+              Icons.bloodtype_rounded,
+              size: 24,
+              color: Colors.redAccent,
+            ),
           ),
           const SizedBox(width: 16),
           const Expanded(
@@ -596,16 +644,21 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             child: DropdownButton<String>(
               hint: const Text("เลือก"),
               value: _selectedBloodType,
-              icon: const Icon(Icons.arrow_drop_down_rounded, color: Colors.grey),
+              icon: const Icon(
+                Icons.arrow_drop_down_rounded,
+                color: Colors.grey,
+              ),
               borderRadius: BorderRadius.circular(12),
               items: ["A", "B", "AB", "O"]
-                  .map((g) => DropdownMenuItem(
-                        value: g,
-                        child: Text(
-                          g,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ))
+                  .map(
+                    (g) => DropdownMenuItem(
+                      value: g,
+                      child: Text(
+                        g,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: (value) {
                 setState(() {
@@ -649,7 +702,12 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
             decoration: InputDecoration(
               prefixIcon: Padding(
-                padding: const EdgeInsets.only(left: 12, right: 12, top: 2, bottom: 2),
+                padding: const EdgeInsets.only(
+                  left: 12,
+                  right: 12,
+                  top: 2,
+                  bottom: 2,
+                ),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -660,7 +718,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                 ),
               ),
               hintText: hint,
-              hintStyle: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.normal),
+              hintStyle: TextStyle(
+                color: Colors.grey[400],
+                fontWeight: FontWeight.normal,
+              ),
               filled: true,
               fillColor: Colors.grey[100],
               contentPadding: const EdgeInsets.symmetric(vertical: 14),

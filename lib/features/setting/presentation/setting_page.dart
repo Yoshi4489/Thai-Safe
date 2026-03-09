@@ -33,8 +33,35 @@ class SettingsPage extends ConsumerWidget {
     }
   }
 
+  Future<bool> _confirmRescueRequest(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Request Rescue Role"),
+        content: const Text(
+          "Are you sure you want to send a rescue role request to admin?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("No"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Yes"),
+          ),
+        ],
+      ),
+    );
+
+    return confirm == true;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(authControllerProvider).user;
+    final isUserRole = currentUser?.role.toUpperCase() == 'USER';
+
     return Scaffold(
       appBar: AppBar(title: const Text("Settings")),
       body: ListView(
@@ -111,8 +138,59 @@ class SettingsPage extends ConsumerWidget {
             title: const Text("Logout"),
             onTap: () => _confirmLogout(context, ref),
           ),
-          const SizedBox(height: 12),
-          _requestRescueTile(context, ref.watch(authControllerProvider).user),
+          if (isUserRole) ListTile(
+            leading: Icon(Icons.medical_services, color: Colors.blue.shade700),
+            title: Text(
+              "Request To Be Rescue",
+              style: TextStyle(
+                color: Colors.blue.shade700,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onTap: () async {
+              if (currentUser == null) return;
+
+              final shouldSend = await _confirmRescueRequest(context);
+              if (!shouldSend) return;
+
+              try {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (_) =>
+                      const Center(child: CircularProgressIndicator()),
+                );
+
+                final name = '${currentUser.firstName} ${currentUser.lastName}'
+                    .trim();
+                await RescueApprovalService().createRescueRequest(
+                  userId: currentUser.id,
+                  name: name.isEmpty ? 'ไม่ระบุชื่อ' : name,
+                  phone: currentUser.tel,
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context); // ปิดโหลด
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("ส่งคำขอสำเร็จ! กรุณารอ Admin อนุมัติ"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  Navigator.pop(context); // ปิดโหลด
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.toString()),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+          ),
 
           const SizedBox(height: 30),
 
@@ -126,63 +204,6 @@ class SettingsPage extends ConsumerWidget {
 
           const SizedBox(height: 20),
         ],
-      ),
-    );
-  }
-
-  Widget _requestRescueTile(BuildContext context, dynamic currentUser) {
-    return Card(
-      color: Colors.blue.shade50,
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        leading: Icon(Icons.medical_services, color: Colors.blue.shade700),
-        title: Text(
-          "Request To Be Rescue",
-          style: TextStyle(
-            color: Colors.blue.shade700,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () async {
-          try {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (_) => const Center(child: CircularProgressIndicator()),
-            );
-
-            final name =
-                '${currentUser.firstName ?? ''} ${currentUser.lastName ?? ''}'
-                    .trim();
-            await RescueApprovalService().createRescueRequest(
-              userId: currentUser.id,
-              name: name.isEmpty ? 'ไม่ระบุชื่อ' : name,
-              phone: currentUser.tel ?? '',
-            );
-
-            if (context.mounted) {
-              Navigator.pop(context); // ปิดโหลด
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text("ส่งคำขอสำเร็จ! กรุณารอ Admin อนุมัติ"),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            }
-          } catch (e) {
-            if (context.mounted) {
-              Navigator.pop(context); // ปิดโหลด
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(e.toString()),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
-        },
       ),
     );
   }
