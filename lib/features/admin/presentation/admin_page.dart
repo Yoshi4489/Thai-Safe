@@ -87,7 +87,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
           SizedBox(width: 12),
           Expanded(
             child: Text(
-              "ThaiSafe Admin System\nManage incidents and rescue teams",
+              "ThaiSafe Admin System\nดูแลและจัดการเหตุการณ์อย่างมีประสิทธิภาพ",
               style: TextStyle(fontSize: 14),
             ),
           ),
@@ -213,7 +213,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
       "Pending": Colors.orange,
       "Resolved": Colors.green,
       "Acknowledged": Colors.blue,
-      "In Progress": Colors.blueGrey,
+      "In Progress": const Color.fromARGB(255, 51, 90, 7),
       "Cancelled": Colors.red,
     };
 

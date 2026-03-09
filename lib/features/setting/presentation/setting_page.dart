@@ -98,7 +98,7 @@ class SettingsPage extends ConsumerWidget {
           ListTile(
             leading: const Icon(Icons.language),
             title: const Text("Language"),
-            trailing: const Text("English"),
+            trailing: const Text("Thai"),
             onTap: () {},
           ),
 

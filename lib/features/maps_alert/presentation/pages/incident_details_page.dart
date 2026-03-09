@@ -7,17 +7,53 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // นำเข้า Auth Provider (ปรับ path ให้ตรงกับโปรเจกต์ของคุณ)
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 
-class IncidentDetailsPage extends ConsumerWidget { 
+class IncidentDetailsPage extends ConsumerStatefulWidget { 
   final dynamic incident; 
 
   const IncidentDetailsPage({super.key, required this.incident});
 
-// อัปเดตฟังก์ชันนี้ เพื่อบันทึกแจ้งเตือนลง Firebase ด้วย
+  @override
+  ConsumerState<IncidentDetailsPage> createState() => _IncidentDetailsPageState();
+}
+
+class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
+  String? _selectedStatus;
+
+// ฟังก์ชันยืนยันการเปลี่ยนสถานะ
+  Future<bool> _confirmStatusChange(BuildContext context, String newStatus) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("ยืนยันการเปลี่ยนสถานะ"),
+        content: Text(
+          "คุณแน่ใจหรือไม่ที่จะเปลี่ยนสถานะเป็น '${_getThaiStatus(newStatus)}'?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("ยกเลิก"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("ยืนยัน", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+    return confirm == true;
+  }
+
+  // อัปเดตฟังก์ชันนี้ เพื่อบันทึกแจ้งเตือนลง Firebase ด้วย
   Future<void> _updateIncidentStatus(BuildContext context, String newStatus, String agencyName) async {
+    // เช็คยืนยันก่อน
+    final confirmed = await _confirmStatusChange(context, newStatus);
+    if (!confirmed) return;
+
     try {
       showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
       
-      Map<String, dynamic> updatedDetails = Map.from(incident.details ?? {});
+      Map<String, dynamic> updatedDetails = Map.from(widget.incident.details ?? {});
       updatedDetails['action_by'] = agencyName;
       updatedDetails['action_time'] = DateTime.now().toIso8601String();
 
@@ -31,15 +67,15 @@ class IncidentDetailsPage extends ConsumerWidget {
       }
 
       // 1. อัปเดตสถานะเหตุการณ์ (เหมือนเดิม)
-      await FirebaseFirestore.instance.collection('incidents').doc(incident.id).update(updateData);
+      await FirebaseFirestore.instance.collection('incidents').doc(widget.incident.id).update(updateData);
       
       // 2. สร้างแจ้งเตือน (Notification)
       // ดึงรายชื่อคนติดตามมา ถ้ามีคนติดตามอยู่ ถึงจะสร้างแจ้งเตือน
-      final List<dynamic> followers = incident.followers ?? [];
+      final List<dynamic> followers = widget.incident.followers ?? [];
       if (followers.isNotEmpty) {
         await FirebaseFirestore.instance.collection('notifications').add({
-          'incident_id': incident.id,
-          'incident_title': incident.title,
+          'incident_id': widget.incident.id,
+          'incident_title': widget.incident.title,
           'status': newStatus, // เช่น Acknowledged, In Progress
           'action_by': agencyName,
           'timestamp': FieldValue.serverTimestamp(),
@@ -260,19 +296,19 @@ class IncidentDetailsPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final currentUser = ref.watch(authControllerProvider).user;
     final bool isRescue = currentUser?.role == 'rescue' || currentUser?.role == 'RESCUER' || currentUser?.role == 'admin' || currentUser?.role == 'ADMIN';
 
     // เช็ครูปภาพ
-    final List<dynamic> imageUrls = incident.imageUrls ?? [];
+    final List<dynamic> imageUrls = widget.incident.imageUrls ?? [];
     final String coverPhoto = imageUrls.isNotEmpty
         ? imageUrls.first
         : 'https://via.placeholder.com/400x300.png?text=No+Image';
 
     final LatLng incidentLocation = LatLng(
-      incident.latitude,
-      incident.longitude,
+      widget.incident.latitude,
+      widget.incident.longitude,
     );
 
     return Scaffold(
@@ -351,13 +387,13 @@ class IncidentDetailsPage extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Chip(
-                        label: Text(_getIncidentTypeName(incident.type)),
+                        label: Text(_getIncidentTypeName(widget.incident.type)),
                         backgroundColor: Colors.blue.shade50,
                         labelStyle: TextStyle(color: Colors.blue.shade800, fontWeight: FontWeight.bold),
                       ),
                       // ✅ แสดงผลสถานะเป็นภาษาไทย
                       Chip(
-                        label: Text(_getThaiStatus(incident.status)),
+                        label: Text(_getThaiStatus(widget.incident.status)),
                         backgroundColor: Colors.green.shade50,
                         labelStyle: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.bold),
                       ),
@@ -366,7 +402,7 @@ class IncidentDetailsPage extends ConsumerWidget {
                   const SizedBox(height: 8),
 
                   Text(
-                    incident.title ?? 'ไม่มีหัวข้อ',
+                    widget.incident.title ?? 'ไม่มีหัวข้อ',
                     style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -383,9 +419,9 @@ class IncidentDetailsPage extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('แจ้งโดย: ${incident.reporterName}'),
-                              Text('เบอร์ติดต่อ: ${incident.reporterTel}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                              Text('เวลา: ${_formatThaiDate(incident.createdAt)}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                              Text('แจ้งโดย: ${widget.incident.reporterName}'),
+                              Text('เบอร์ติดต่อ: ${widget.incident.reporterTel}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text('เวลา: ${_formatThaiDate(widget.incident.createdAt)}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                             ],
                           ),
                         ),
@@ -399,7 +435,7 @@ class IncidentDetailsPage extends ConsumerWidget {
                   const Divider(),
                   const SizedBox(height: 12),
                   
-                  ..._buildDetailsList(incident.details ?? {}),
+                  ..._buildDetailsList(widget.incident.details ?? {}),
 
                   const SizedBox(height: 24),
 
@@ -430,57 +466,63 @@ class IncidentDetailsPage extends ConsumerWidget {
                   const SizedBox(height: 40),
 
                   // เช็คเงื่อนไข: ซ่อนปุ่มถ้าสถานะเป็น 'สำเร็จ' (Resolved) หรือ 'ยกเลิก' (Cancelled)
-                  if (isRescue && incident.status != 'Resolved' && incident.status != 'Cancelled') ...[
+                  if (isRescue && widget.incident.status != 'Resolved' && widget.incident.status != 'Cancelled') ...[
                     const Divider(),
                     const SizedBox(height: 8),
                     const Text('ส่วนปฏิบัติการของผู้ช่วยเหลือ (Rescue)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo)),
                     const SizedBox(height: 12),
                     
-                    // แถวที่ 1: รับเรื่อง และ กำลังดำเนินการ
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
-                            onPressed: incident.status == 'Acknowledged' || incident.status == 'In Progress' 
-                                ? null 
-                                : () => _updateIncidentStatus(context, 'Acknowledged', currentUser?.firstName ?? 'Rescue'),
-                            child: const Text('รับเรื่อง'),
-                          ),
+                    // Dropdown สำหรับเลือกสถานะ
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white,
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          isExpanded: true,
+                          hint: const Text('เลือกสถานะใหม่'),
+                          value: _selectedStatus,
+                          items: const [
+                            DropdownMenuItem(value: 'Acknowledged', child: Text('รับเรื่อง')),
+                            DropdownMenuItem(value: 'In Progress', child: Text('กำลังดำเนินการ')),
+                            DropdownMenuItem(value: 'Resolved', child: Text('สำเร็จ')),
+                            DropdownMenuItem(value: 'Cancelled', child: Text('ยกเลิก')),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedStatus = value;
+                            });
+                          },
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, foregroundColor: Colors.white),
-                            onPressed: incident.status == 'In Progress' 
-                                ? null 
-                                : () => _updateIncidentStatus(context, 'In Progress', currentUser?.firstName ?? 'Rescue'),
-                            child: const Text('กำลังดำเนินการ'), // แก้ข้อความให้ตรงกับ Model
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
 
-                    // แถวที่ 2: สำเร็จ และ ยกเลิกเคส
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                            onPressed: () => _updateIncidentStatus(context, 'Resolved', currentUser?.firstName ?? 'Rescue'),
-                            child: const Text('สำเร็จ'),
-                          ),
+                    // ปุ่มบันทึกการเปลี่ยนสถานะ
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                            onPressed: () => _updateIncidentStatus(context, 'Cancelled', currentUser?.firstName ?? 'Rescue'),
-                            child: const Text('ยกเลิก'), // เพิ่มปุ่มยกเลิก
-                          ),
-                        ),
-                      ],
+                        onPressed: _selectedStatus == null
+                            ? null
+                            : () {
+                                _updateIncidentStatus(
+                                  context,
+                                  _selectedStatus!,
+                                  currentUser?.firstName ?? 'Rescue',
+                                );
+                              },
+                        icon: const Icon(Icons.save),
+                        label: const Text('บันทึกการเปลี่ยนสถานะ', style: TextStyle(fontSize: 16)),
+                      ),
                     ),
                     const SizedBox(height: 40),
                   ],
