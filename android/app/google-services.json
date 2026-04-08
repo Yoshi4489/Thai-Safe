@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "796274817197",
+    "project_id": "thai-safe-967b9",
+    "storage_bucket": "thai-safe-967b9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:796274817197:android:eae1a4a9899b91dd53ee24",
+        "android_client_info": {
+          "package_name": "com.example.thai_safe"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbx9F6I496rCgbUZXUtehCMvZNZcI-87U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
