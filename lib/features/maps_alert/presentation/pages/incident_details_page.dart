@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:thai_safe/core/maps/open_street_map.dart';
 
 // นำเข้า Auth Provider (ปรับ path ให้ตรงกับโปรเจกต์ของคุณ)
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
@@ -481,18 +483,34 @@ class _IncidentDetailsPageState extends ConsumerState<IncidentDetailsPage> {
                     child: SizedBox(
                       height: 200,
                       width: double.infinity,
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(target: incidentLocation, zoom: 16),
-                        markers: {
-                          Marker(
-                            markerId: const MarkerId('incident_loc'),
-                            position: incidentLocation,
-                            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+                      child: FlutterMap(
+                        options: MapOptions(
+                          initialCenter: incidentLocation,
+                          initialZoom: 16,
+                          minZoom: 16,
+                          maxZoom: 16,
+                          interactionOptions: const InteractionOptions(
+                            flags: InteractiveFlag.none,
                           ),
-                        },
-                        scrollGesturesEnabled: false,
-                        zoomGesturesEnabled: false,
-                        myLocationButtonEnabled: false,
+                        ),
+                        children: [
+                          const OpenStreetMapTileLayer(),
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: incidentLocation,
+                                width: 48,
+                                height: 48,
+                                child: const Icon(
+                                  Icons.location_pin,
+                                  color: Colors.redAccent,
+                                  size: 48,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const OpenStreetMapAttribution(),
+                        ],
                       ),
                     ),
                   ),

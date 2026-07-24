@@ -1,12 +1,13 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geocoding/geocoding.dart' as geo;
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:thai_safe/core/maps/open_street_map.dart';
 
 class IncidentMapPicker extends StatefulWidget {
   final LatLng initialLocation;
-  final Function(LatLng) onLocationChanged;
+  final ValueChanged<LatLng> onLocationChanged;
 
   const IncidentMapPicker({
     super.key,
@@ -20,8 +21,9 @@ class IncidentMapPicker extends StatefulWidget {
 
 class _IncidentMapPickerState extends State<IncidentMapPicker> {
   final TextEditingController _searchController = TextEditingController();
+  final MapController _mapController = MapController();
   late LatLng _selectedLocation;
-  GoogleMapController? _mapController;
+  bool _isMapReady = false;
 
   @override
   void initState() {
@@ -33,47 +35,56 @@ class _IncidentMapPickerState extends State<IncidentMapPicker> {
   @override
   void dispose() {
     _searchController.dispose();
-    _mapController?.dispose();
+    _mapController.dispose();
     super.dispose();
   }
 
+  void _selectLocation(LatLng location, {bool moveMap = false}) {
+    setState(() => _selectedLocation = location);
+    widget.onLocationChanged(location);
+
+    if (moveMap && _isMapReady) {
+      _mapController.move(location, 16);
+    }
+  }
+
   Future<void> _searchLocation() async {
-    String address = _searchController.text.trim();
+    final address = _searchController.text.trim();
     if (address.isEmpty) return;
 
     try {
-      List<geo.Location> locations = await geo.locationFromAddress(address);
-      if (locations.isNotEmpty) {
-        geo.Location first = locations.first;
-        LatLng newPos = LatLng(first.latitude, first.longitude);
+      final locations = await geo.locationFromAddress(address);
+      if (locations.isEmpty || !mounted) return;
 
-        setState(() => _selectedLocation = newPos);
-        widget.onLocationChanged(newPos); // ส่งค่ากลับไปหน้าหลัก
-
-        _mapController?.animateCamera(
-          CameraUpdate.newCameraPosition(CameraPosition(target: newPos, zoom: 16)),
-        );
-        FocusScope.of(context).unfocus();
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ไม่พบสถานที่: $address')));
+      final first = locations.first;
+      _selectLocation(LatLng(first.latitude, first.longitude), moveMap: true);
+      FocusScope.of(context).unfocus();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('ไม่พบสถานที่: $address')));
     }
   }
 
   Future<void> _getCurrentLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
-    LocationPermission permission = await Geolocator.checkPermission();
+
+    var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) return;
     }
-    Position position = await Geolocator.getCurrentPosition();
-    if (mounted) {
-      setState(() => _selectedLocation = LatLng(position.latitude, position.longitude));
-      widget.onLocationChanged(_selectedLocation);
-      _mapController?.animateCamera(CameraUpdate.newLatLng(_selectedLocation));
-    }
+    if (permission == LocationPermission.deniedForever) return;
+
+    final position = await Geolocator.getCurrentPosition();
+    if (!mounted) return;
+
+    _selectLocation(
+      LatLng(position.latitude, position.longitude),
+      moveMap: true,
+    );
   }
 
   @override
@@ -91,8 +102,14 @@ class _IncidentMapPickerState extends State<IncidentMapPicker> {
             ),
             filled: true,
             fillColor: Colors.grey.shade100,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 0,
+            ),
           ),
           onSubmitted: (_) => _searchLocation(),
         ),
@@ -101,26 +118,50 @@ class _IncidentMapPickerState extends State<IncidentMapPicker> {
           height: 200,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: GoogleMap(
-              initialCameraPosition: CameraPosition(target: _selectedLocation, zoom: 15),
-              onMapCreated: (c) => _mapController = c,
-              onTap: (pos) {
-                setState(() => _selectedLocation = pos);
-                widget.onLocationChanged(pos);
-              },
-              markers: {
-                Marker(
-                  markerId: const MarkerId('m'),
-                  position: _selectedLocation,
-                  draggable: true,
-                  onDragEnd: (newPos) {
-                    setState(() => _selectedLocation = newPos);
-                    widget.onLocationChanged(newPos);
-                  },
-                )
-              },
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: _selectedLocation,
+                initialZoom: 15,
+                minZoom: 3,
+                maxZoom: 19,
+                onMapReady: () => _isMapReady = true,
+                onTap: (_, point) => _selectLocation(point),
+                onLongPress: (_, point) => _selectLocation(point),
+              ),
+              children: [
+                const OpenStreetMapTileLayer(),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _selectedLocation,
+                      width: 48,
+                      height: 48,
+                      child: const Icon(
+                        Icons.location_pin,
+                        color: Colors.redAccent,
+                        size: 48,
+                      ),
+                    ),
+                  ],
+                ),
+                const OpenStreetMapAttribution(),
+              ],
             ),
           ),
+        ),
+        const SizedBox(height: 6),
+        const Row(
+          children: [
+            Icon(Icons.touch_app, size: 16, color: Colors.black54),
+            SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                'แตะแผนที่เพื่อเลือกจุดเกิดเหตุ',
+                style: TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+            ),
+          ],
         ),
       ],
     );
