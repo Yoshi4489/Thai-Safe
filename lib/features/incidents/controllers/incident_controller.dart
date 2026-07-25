@@ -1,27 +1,24 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:geoflutterfire2/geoflutterfire2.dart';
-import 'package:uuid/uuid.dart';
+import 'package:thai_safe/features/incidents/data/incident_model.dart';
+import 'package:thai_safe/features/incidents/services/incident_service.dart';
 
-// Import Model และ Service 
-import '../data/incident_model.dart';
-import '../services/incident_service.dart';
-
-// --- STATE ---
 class IncidentState {
-  final bool isLoading;
-  final String? error;
-  final List<IncidentModel> incidents;
-  final List<IncidentModel> nearbyIncidents;
-  final bool isRiskNearby;
-
-  IncidentState({
+  const IncidentState({
     this.isLoading = false,
     this.error,
     this.incidents = const [],
     this.nearbyIncidents = const [],
     this.isRiskNearby = false,
   });
+
+  final bool isLoading;
+  final String? error;
+  final List<IncidentModel> incidents;
+  final List<IncidentModel> nearbyIncidents;
+  final bool isRiskNearby;
 
   IncidentState copyWith({
     bool? isLoading,
@@ -32,7 +29,7 @@ class IncidentState {
   }) {
     return IncidentState(
       isLoading: isLoading ?? this.isLoading,
-      error: error, // ส่ง null มาเพื่อล้างค่า error ได้
+      error: error,
       incidents: incidents ?? this.incidents,
       nearbyIncidents: nearbyIncidents ?? this.nearbyIncidents,
       isRiskNearby: isRiskNearby ?? this.isRiskNearby,
@@ -40,109 +37,55 @@ class IncidentState {
   }
 }
 
-// --- CONTROLLER ---
 class IncidentController extends StateNotifier<IncidentState> {
+  IncidentController(this._service) : super(const IncidentState()) {
+    _subscription = _service.getIncidentsStream().listen(
+      (incidents) => state = state.copyWith(incidents: incidents),
+      onError: (Object error) {
+        state = state.copyWith(error: error.toString());
+      },
+    );
+  }
+
   final IncidentService _service;
-  final Ref _ref;
+  StreamSubscription<List<IncidentModel>>? _subscription;
 
-  IncidentController(this._service, this._ref) : super(IncidentState()) {
-    _initData();
-  }
-
-  void _initData() {
-    _service.getIncidentsStream().listen((incidentList) {
-      if (mounted) {
-        state = state.copyWith(incidents: incidentList);
-      }
-    }, onError: (e) {
-      if (mounted) {
-        state = state.copyWith(error: e.toString());
-      }
-    });
-  }
-
-  Future<void> reportIncident({
-    required String title,
-    required String type,
-    required Map<String, dynamic> details,
-    required String urgency,
-    required double lat,
-    required double lng,
-    required List<String>? imageUrls,
-    required String userId,      
-    required String reporterName, 
-    required String reporterTel,  
-  }) async {
+  Future<void> getIncidentsNearby(
+    double latitude,
+    double longitude,
+    double radiusKm,
+  ) async {
     state = state.copyWith(isLoading: true, error: null);
-
     try {
-      final newId = const Uuid().v4();
-      final geo = GeoFlutterFire();
-      final point = geo.point(latitude: lat, longitude: lng);
-
-      final incident = IncidentModel(
-        id: newId,
-        userId: userId,           
-        reporterName: reporterName,
-        reporterTel: reporterTel,
-        title: title,
-        type: type,
-        details: details,
-        latitude: lat,
-        longitude: lng,
-        geohash: point.hash,
-        geopoint: point.geoPoint,
-        status: 'Pending',
-        urgency: urgency,
-        createdAt: DateTime.now(),
-        imageUrls: imageUrls ?? [],
-        followers: [userId],
+      final incidents = await _service
+          .getIncidentsWithinKmRadius(latitude, longitude, radiusKm)
+          .first;
+      final risk = incidents.any(
+        (incident) =>
+            incident.status != 'cancelled' && incident.status != 'resolved',
       );
-
-      // ส่งไป Service เพื่อบันทึกลง Database
-      await _service.createIncident(incident);
-
-      if (mounted) {
-        state = state.copyWith(isLoading: false);
-      }
-    } catch (e) {
-      if (mounted) {
-        state = state.copyWith(isLoading: false, error: e.toString());
-      }
-      rethrow;
+      state = state.copyWith(
+        nearbyIncidents: incidents,
+        isRiskNearby: risk,
+        isLoading: false,
+      );
+    } catch (error) {
+      state = state.copyWith(error: error.toString(), isLoading: false);
     }
   }
 
-    Future<void> getIncidentsNearby(double userLat, double userLng, double radiusInKm) async {
-      try {
-        state = state.copyWith(isLoading: true);
-        final nearbyIncidents = await _service.getIncidentsWithinKmRadius(userLat, userLng, radiusInKm).first;
-
-        for (var incident in nearbyIncidents) {
-          if (incident.status.toLowerCase() != 'cancelled' && incident.status.toLowerCase() != 'resolved') {
-            state = state.copyWith(isRiskNearby: true);
-            break;
-          }
-        }
-        if (mounted) {
-          state = state.copyWith(nearbyIncidents: nearbyIncidents, isLoading: false);
-        }
-      }
-      catch (e) {
-        if (mounted) {
-          state = state.copyWith(error: e.toString(), isLoading: false);
-        }
-        rethrow;
-      }
-    }
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
 }
 
-// --- PROVIDERS ---
-final incidentServiceProvider = Provider<IncidentService>((ref) {
-  return IncidentService();
-});
+final incidentServiceProvider = Provider<IncidentService>(
+  (ref) => IncidentService(),
+);
 
-final incidentControllerProvider = StateNotifierProvider<IncidentController, IncidentState>((ref) {
-  final service = ref.watch(incidentServiceProvider);
-  return IncidentController(service, ref);
-});
+final incidentControllerProvider =
+    StateNotifierProvider<IncidentController, IncidentState>((ref) {
+      return IncidentController(ref.watch(incidentServiceProvider));
+    });

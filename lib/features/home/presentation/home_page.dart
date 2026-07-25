@@ -7,7 +7,7 @@ import 'package:thai_safe/features/authentication/providers/auth_state_provider.
 import 'package:thai_safe/features/incidents/controllers/incident_controller.dart';
 import 'package:thai_safe/features/incidents/data/incident_model.dart';
 import 'package:thai_safe/features/maps_alert/presentation/pages/incident_details_page.dart';
-import 'package:thai_safe/features/incidents/presentation/pages/report_incident_page.dart';
+import 'package:thai_safe/features/incidents/presentation/pages/quick_sos_page.dart';
 import 'package:thai_safe/core/widgets/skeleton_loading.dart';
 import 'notification_page.dart';
 
@@ -100,59 +100,59 @@ class _HomePageState extends ConsumerState<HomePage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// 1. WELCOME BANNER
-            _buildWelcomeCard(),
-            const SizedBox(height: 32),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// 1. WELCOME BANNER
+              _buildWelcomeCard(),
+              const SizedBox(height: 32),
 
-            /// 2. MAIN SOS BUTTON
-            _buildSOSButton(ref),
-            const SizedBox(height: 32),
+              /// 2. MAIN SOS BUTTON
+              _buildSOSButton(ref),
+              const SizedBox(height: 32),
 
-            /// 3. RISK AREA WARNING
-            if (incidentController.isRiskNearby) ...[
-              _buildRiskAreaBanner(),
-              const SizedBox(height: 24),
-            ],
-
-            /// 4. NEARBY INCIDENTS
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "เหตุการณ์ใกล้เคียงคุณ",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                Icon(
-                  Icons.location_on_rounded,
-                  color: Colors.blueAccent.shade200,
-                  size: 20,
-                ),
+              /// 3. RISK AREA WARNING
+              if (incidentController.isRiskNearby) ...[
+                _buildRiskAreaBanner(),
+                const SizedBox(height: 24),
               ],
-            ),
-            const SizedBox(height: 16),
 
-            incidentController.isLoading
-                ? Column(
-                    children: List.generate(
-                      3,
-                      (index) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: SkeletonIncidentCard(),
-                      ),
+              /// 4. NEARBY INCIDENTS
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    "เหตุการณ์ใกล้เคียงคุณ",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
                     ),
-                  )
-                : _buildNearIncidentList(incidentController.nearbyIncidents),
+                  ),
+                  Icon(
+                    Icons.location_on_rounded,
+                    color: Colors.blueAccent.shade200,
+                    size: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
 
-            const SizedBox(height: 40),
-          ],
+              incidentController.isLoading
+                  ? Column(
+                      children: List.generate(
+                        3,
+                        (index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: SkeletonIncidentCard(),
+                        ),
+                      ),
+                    )
+                  : _buildNearIncidentList(incidentController.nearbyIncidents),
+
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -306,9 +306,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             onTap: () {
               Navigator.push(
                 ref.context,
-                MaterialPageRoute(
-                  builder: (context) => const ReportIncidentPage(),
-                ),
+                MaterialPageRoute(builder: (context) => const QuickSosPage()),
               );
             },
             child: Container(

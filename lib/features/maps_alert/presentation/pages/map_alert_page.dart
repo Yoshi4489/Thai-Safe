@@ -9,7 +9,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:thai_safe/core/maps/open_street_map.dart';
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 import 'package:thai_safe/features/incidents/controllers/incident_controller.dart';
-import 'package:thai_safe/features/incidents/presentation/pages/report_incident_page.dart';
+import 'package:thai_safe/features/incidents/presentation/pages/quick_sos_page.dart';
 
 import '../widgets/incident_bottom_sheet.dart';
 import '../widgets/profile_status_badge.dart';
@@ -319,7 +319,7 @@ class _MapAlertPageState extends ConsumerState<MapAlertPage> {
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          ReportIncidentPage(currentLocation: currentPosition),
+                          QuickSosPage(fallbackLocation: currentPosition),
                     ),
                   );
                 },

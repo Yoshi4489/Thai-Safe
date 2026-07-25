@@ -1,127 +1,68 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
+import 'package:thai_safe/features/home/services/notification_repository.dart';
 
-class NotificationPage extends ConsumerWidget {
+class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
 
-  String _getNotificationMessage(String status) {
-    switch (status) {
-      case 'Acknowledged': return 'กู้ภัยได้รับเรื่องเหตุการณ์นี้แล้ว';
-      case 'In Progress': return 'กู้ภัยกำลังเดินทาง/ดำเนินการแก้ไข';
-      case 'Resolved': return 'เหตุการณ์นี้ได้รับการแก้ไขสำเร็จแล้ว';
-      case 'Cancelled': return 'เหตุการณ์นี้ถูกยกเลิกแล้ว';
-      default: return 'มีการอัปเดตสถานะเหตุการณ์เป็น $status';
-    }
+  String _relative(DateTime time) {
+    final difference = DateTime.now().difference(time);
+    if (difference.inDays > 0) return '${difference.inDays}d ago';
+    if (difference.inHours > 0) return '${difference.inHours}h ago';
+    if (difference.inMinutes > 0) return '${difference.inMinutes}m ago';
+    return 'Just now';
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = ref.watch(authControllerProvider).user;
-
-    if (currentUser == null) {
-      return Scaffold(appBar: AppBar(title: const Text('การแจ้งเตือน')), body: const Center(child: Text('กรุณาเข้าสู่ระบบ')));
-    }
-
+  Widget build(BuildContext context) {
+    final repository = NotificationRepository();
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('การแจ้งเตือน'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
-      ),
-      // เปลี่ยนมาดึงข้อมูลแบบไม่กรองด้วย query เพื่อป้องกันข้อมูลหายจากฝั่ง Server
-      // เราจะมาคัดกรองเฉพาะที่เป็นของเราใน List ด้านล่างแทน
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('notifications')
-            .orderBy('timestamp', descending: true)
-            .limit(50) 
-            .snapshots(),
+      appBar: AppBar(title: const Text('Notifications')),
+      body: StreamBuilder<List<UserNotification>>(
+        stream: repository.watch(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+          if (snapshot.hasError) {
+            return Center(child: Text(snapshot.error.toString()));
           }
           if (!snapshot.hasData) {
-            return const Center(child: Text('ไม่มีการแจ้งเตือน'));
+            return const Center(child: CircularProgressIndicator());
           }
-
-          // กรองข้อมูลในแอป (Local Filtering) เพื่อให้มั่นใจว่ารายการไม่หายวับไปจากหน้าจอ
-          final docs = snapshot.data!.docs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final List<dynamic> targetUsers = data['target_users'] ?? [];
-            return targetUsers.contains(currentUser.id);
-          }).toList();
-
-          if (docs.isEmpty) {
-            return const Center(child: Text('ไม่มีการแจ้งเตือนใหม่', style: TextStyle(color: Colors.grey)));
+          final notifications = snapshot.data!;
+          if (notifications.isEmpty) {
+            return const Center(child: Text('No notifications'));
           }
-
           return ListView.separated(
-            itemCount: docs.length,
-            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemCount: notifications.length,
+            separatorBuilder: (_, _) => const Divider(height: 1),
             itemBuilder: (context, index) {
-              final doc = docs[index];
-              final data = doc.data() as Map<String, dynamic>;
-              
-              final String incidentTitle = data['incident_title'] ?? 'เหตุการณ์';
-              final String status = data['status'] ?? '';
-              final String actionBy = data['action_by'] ?? 'เจ้าหน้าที่';
-              final Timestamp? timestamp = data['timestamp'];
-              final List<String> readBy = List<String>.from(data['read_by'] ?? []);
-              
-              final bool isRead = readBy.contains(currentUser.id);
-
+              final notification = notifications[index];
               return ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                tileColor: isRead ? Colors.white : Colors.blue.shade50,
-                leading: CircleAvatar(
-                  backgroundColor: isRead ? Colors.grey.shade200 : Colors.blue.shade100,
-                  child: Icon(
-                    status == 'Resolved' ? Icons.check_circle : Icons.notifications_active,
-                    color: status == 'Resolved' ? Colors.green : (isRead ? Colors.grey : Colors.blue),
+                tileColor: notification.isRead ? null : Colors.blue.shade50,
+                leading: Icon(
+                  notification.isRead
+                      ? Icons.notifications_none
+                      : Icons.notifications_active,
+                ),
+                title: Text(
+                  notification.title,
+                  style: TextStyle(
+                    fontWeight: notification.isRead
+                        ? FontWeight.normal
+                        : FontWeight.bold,
                   ),
                 ),
-                title: Text(incidentTitle, style: TextStyle(fontWeight: isRead ? FontWeight.normal : FontWeight.bold)),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 4),
-                    Text('${_getNotificationMessage(status)} โดย $actionBy', style: TextStyle(color: Colors.grey.shade800)),
-                    const SizedBox(height: 4),
-                    Text(
-                      timestamp != null ? _formatTime(timestamp.toDate()) : '',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
+                subtitle: Text(
+                  '${notification.body}\n'
+                  '${_relative(notification.createdAt)}',
                 ),
-                onTap: () async {
-                  if (!isRead) {
-                    try {
-                      // อัปเดตสถานะการอ่าน
-                      await FirebaseFirestore.instance.collection('notifications').doc(doc.id).update({
-                        'read_by': FieldValue.arrayUnion([currentUser.id])
-                      });
-                    } catch (e) {
-                      debugPrint('Update Error: $e');
-                    }
-                  }
-                },
+                isThreeLine: true,
+                onTap: notification.isRead
+                    ? null
+                    : () => repository.markRead(notification.id),
               );
             },
           );
         },
       ),
     );
-  }
-
-  String _formatTime(DateTime time) {
-    final now = DateTime.now();
-    final difference = now.difference(time);
-    if (difference.inDays > 0) return '${difference.inDays} วันที่แล้ว';
-    if (difference.inHours > 0) return '${difference.inHours} ชั่วโมงที่แล้ว';
-    if (difference.inMinutes > 0) return '${difference.inMinutes} นาทีที่แล้ว';
-    return 'เพิ่งเกิดขึ้น';
   }
 }

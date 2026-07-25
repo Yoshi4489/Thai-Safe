@@ -4,23 +4,36 @@ import 'package:thai_safe/core/config/firebase.dart';
 import 'package:thai_safe/features/authentication/data/user_model.dart';
 
 class AuthService {
-  final _auth = FirebaseAuth.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final CollectionReference<Map<String, dynamic>> usersCollection = firestore
       .collection('users');
 
   Stream<UserModel?> authStateChanges() async* {
-    await for (final user in _auth.authStateChanges()) {
-      if (user == null) {
+    await for (final firebaseUser in _auth.idTokenChanges()) {
+      if (firebaseUser == null) {
         yield null;
-      } else {
-        yield* getUserByUID(user.uid);
+        continue;
+      }
+      final token = await firebaseUser.getIdTokenResult();
+      final role = _normalizeRole(token.claims?['role']);
+      await for (final profile in getUserByUID(firebaseUser.uid)) {
+        yield profile.copyWith(role: role);
       }
     }
   }
 
-  /* =========================
-   * SEND OTP
-   * ========================= */
+  String _normalizeRole(Object? value) {
+    final role = value?.toString().toLowerCase();
+    if (role == 'admin') return 'admin';
+    if (role == 'responder' ||
+        role == 'rescue' ||
+        role == 'rescuer' ||
+        role == 'officer') {
+      return 'responder';
+    }
+    return 'user';
+  }
+
   Future<void> sendOtp({
     required String phoneNumber,
     required void Function(String verificationId) onCodeSent,
@@ -29,27 +42,17 @@ class AuthService {
     await firebaseAuth.verifyPhoneNumber(
       phoneNumber: phoneNumber,
       timeout: const Duration(seconds: 60),
-
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        // Auto verify (Android only sometimes)
+      verificationCompleted: (credential) async {
         await firebaseAuth.signInWithCredential(credential);
       },
-
-      verificationFailed: (FirebaseAuthException e) {
-        onError(e.message ?? 'OTP verification failed');
+      verificationFailed: (error) {
+        onError(error.message ?? 'OTP verification failed');
       },
-
-      codeSent: (String verificationId, int? resendToken) {
-        onCodeSent(verificationId);
-      },
-
-      codeAutoRetrievalTimeout: (String verificationId) {},
+      codeSent: (verificationId, _) => onCodeSent(verificationId),
+      codeAutoRetrievalTimeout: (_) {},
     );
   }
 
-  /* =========================
-   * VERIFY OTP + LOGIN
-   * ========================= */
   Future<UserModel> verifyOtpAndLogin({
     required String verificationId,
     required String smsCode,
@@ -58,63 +61,62 @@ class AuthService {
       verificationId: verificationId,
       smsCode: smsCode,
     );
+    final result = await firebaseAuth.signInWithCredential(credential);
+    final firebaseUser = result.user;
+    if (firebaseUser == null) throw StateError('Authentication failed');
 
-    final userCredential = await firebaseAuth.signInWithCredential(credential);
-
-    final user = userCredential.user;
-    if (user == null) {
-      throw Exception('Authentication failed');
-    }
-
-    final uid = user.uid;
-    final docRef = usersCollection.doc(uid);
+    final docRef = usersCollection.doc(firebaseUser.uid);
     final doc = await docRef.get();
-
-    // 🔥 FIRST TIME LOGIN → CREATE USER
     if (!doc.exists) {
-      final newUser = UserModel(
-        id: uid,
+      final user = UserModel(
+        id: firebaseUser.uid,
         firstName: '',
         lastName: '',
         gender: '',
-        profile_url: "https://res.cloudinary.com/dtbmrqm5f/image/upload/v1772038870/default-avatar-image_yx83y9.jpg",
+        profile_url: '',
         birthdate: DateTime.now(),
-        tel: user.phoneNumber!,
-        role: 'USER',
+        tel: firebaseUser.phoneNumber ?? '',
+        role: 'user',
         firstLogin: true,
         createdAt: DateTime.now(),
       );
-
-      await docRef.set(newUser.toMap());
-      return newUser;
+      await docRef.set(user.toMap());
+      return user;
     }
-
-    return UserModel.fromMap(doc.data()!);
+    final token = await firebaseUser.getIdTokenResult();
+    return UserModel.fromMap(
+      doc.data()!,
+    ).copyWith(role: _normalizeRole(token.claims?['role']));
   }
 
-  /* =========================
-   * READ USER BY UID
-   * ========================= */
   Stream<UserModel> getUserByUID(String uid) {
     return usersCollection.doc(uid).snapshots().map((doc) {
-      if (!doc.exists) {
-        throw Exception('User not found');
-      }
+      if (!doc.exists) throw StateError('User profile not found');
       return UserModel.fromMap(doc.data()!);
     });
   }
 
-  /* =========================
-   * UPDATE USER
-   * ========================= */
   Future<void> updateUser(String uid, Map<String, dynamic> data) {
-    return usersCollection.doc(uid).update(data);
+    const allowed = {
+      'first_name',
+      'last_name',
+      'birthdate',
+      'gender',
+      'profile_url',
+      'firstLogin',
+      'notification_preferences',
+      'trusted_contacts',
+      'updated_at',
+    };
+    final safeData = Map<String, dynamic>.fromEntries(
+      data.entries.where((entry) => allowed.contains(entry.key)),
+    );
+    return usersCollection.doc(uid).update(safeData);
   }
 
-  /* =========================
-   * LOGOUT
-   * ========================= */
-  Future<void> logout() async {
-    await firebaseAuth.signOut();
+  Future<void> refreshRoleClaims() async {
+    await _auth.currentUser?.getIdToken(true);
   }
+
+  Future<void> logout() => firebaseAuth.signOut();
 }

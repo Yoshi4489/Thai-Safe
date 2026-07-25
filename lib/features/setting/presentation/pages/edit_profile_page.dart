@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:thai_safe/core/services/cloudinary_provider.dart';
+import 'package:thai_safe/core/services/firebase_storage_service.dart';
 import 'package:thai_safe/core/validators/phone_validator.dart';
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
 import 'package:thai_safe/features/profile/data/medical_profile_model.dart';
@@ -15,7 +15,6 @@ class EditProfilePage extends ConsumerStatefulWidget {
 }
 
 class _EditProfilePageState extends ConsumerState<EditProfilePage> {
-  File? _imageFile;
   String? _selectedBloodType;
 
   final TextEditingController chronic_diseases_controller =
@@ -35,10 +34,19 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
   Future<void> _pickImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
     final XFile? pickedFile = await picker.pickImage(source: source);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
+    if (pickedFile == null) return;
+    final image = File(pickedFile.path);
+    try {
+      final url = await FirebaseStorageService().uploadProfileImage(image);
+      if (!mounted) return;
+      await ref
+          .read(authControllerProvider.notifier)
+          .updateProfile(profile_url: url);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Profile image upload failed: $error')),
+      );
     }
   }
 
@@ -139,7 +147,6 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final cloudProvider = ref.watch(cloudinaryServiceProvider);
     final authController = ref.watch(authControllerProvider);
     final medicalController = ref.watch(medicalProfileControllerProvider);
 
@@ -231,19 +238,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
               child: Column(
                 children: [
                   GestureDetector(
-                    onTap: () async {
-                      _showImageSourceActionSheet();
-                      if (_imageFile != null) {
-                        final res = await cloudProvider.uploadImage(
-                          _imageFile!,
-                        );
-                        if (res.isNotEmpty && mounted) {
-                          ref
-                              .read(authControllerProvider.notifier)
-                              .updateProfile(profile_url: res);
-                        }
-                      }
-                    },
+                    onTap: _showImageSourceActionSheet,
                     child: Stack(
                       children: [
                         Container(

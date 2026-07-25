@@ -2,26 +2,24 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:thai_safe/core/services/notification_service.dart';
 import 'package:thai_safe/features/authentication/data/user_model.dart';
 import 'package:thai_safe/features/authentication/services/auth_service.dart';
 
-/// =======================
-/// STATE
-/// =======================
 class AuthState {
-  final bool isLoading;
-  final UserModel? user;
-  final String? error;
-  final String? verificationId;
-  final String? phoneNumber;
-
-  AuthState({
+  const AuthState({
     this.isLoading = false,
     this.user,
     this.error,
     this.verificationId,
     this.phoneNumber,
   });
+
+  final bool isLoading;
+  final UserModel? user;
+  final String? error;
+  final String? verificationId;
+  final String? phoneNumber;
 
   AuthState copyWith({
     bool? isLoading,
@@ -40,29 +38,32 @@ class AuthState {
   }
 }
 
-/// =======================
-/// CONTROLLER
-/// =======================
 class AuthController extends StateNotifier<AuthState> {
-  final AuthService _authService;
-  StreamSubscription<UserModel?>? _authSubscription;
-
-  AuthController(this._authService) : super(AuthState()) {
-    _authSubscription = _authService.authStateChanges().listen((user) {
-      state = state.copyWith(user: user);
-    }); 
+  AuthController(this._authService) : super(const AuthState()) {
+    _subscription = _authService.authStateChanges().listen(
+      (user) {
+        state = state.copyWith(user: user, isLoading: false);
+        if (user != null && _notificationUid != user.id) {
+          _notificationUid = user.id;
+          unawaited(NotificationService.instance.initializeForSignedInUser());
+        }
+      },
+      onError: (Object error) {
+        state = state.copyWith(isLoading: false, error: error.toString());
+      },
+    );
   }
 
-  /* -----------------------
-   * SEND OTP
-   * ----------------------- */
+  final AuthService _authService;
+  StreamSubscription<UserModel?>? _subscription;
+  String? _notificationUid;
+
   Future<void> sendOtp(String phoneNumber) async {
     state = state.copyWith(
       isLoading: true,
       error: null,
       phoneNumber: phoneNumber,
     );
-
     await _authService.sendOtp(
       phoneNumber: phoneNumber,
       onCodeSent: (verificationId) {
@@ -77,95 +78,74 @@ class AuthController extends StateNotifier<AuthState> {
     );
   }
 
-  /* -----------------------
-   * VERIFY OTP
-   * ----------------------- */
   Future<void> verifyOtp(String smsCode) async {
     final verificationId = state.verificationId;
-
     if (verificationId == null) {
-      state = state.copyWith(
-        error: 'Verification ID not found. Please request OTP again.',
-      );
+      state = state.copyWith(error: 'Please request a new OTP.');
       return;
     }
-
     state = state.copyWith(isLoading: true, error: null);
-
     try {
       final user = await _authService.verifyOtpAndLogin(
         verificationId: verificationId,
         smsCode: smsCode,
       );
-
-      state = state.copyWith(user: user, error: null, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(user: user, isLoading: false, error: null);
+    } catch (error) {
+      state = state.copyWith(isLoading: false, error: error.toString());
     }
   }
 
-  /* -----------------------
-   * UPDATE PROFILE
-   * ----------------------- */
   Future<void> updateProfile({
     String? firstName,
     String? lastName,
     DateTime? birthdate,
     String? gender,
-    String? profile_url
+    String? profile_url,
   }) async {
     final user = state.user;
-
-    if (user == null) {
-      state = state.copyWith(error: "User not found");
-      return Future.error("User not found");
-    }
-
+    if (user == null) throw StateError('User not found');
+    state = state.copyWith(isLoading: true, error: null);
     try {
-      state = state.copyWith(isLoading: true, error: null);
-
-      final updatedUser = user.copyWith(
-        firstName: firstName ?? user.firstName,
-        lastName: lastName ?? user.lastName,
-        birthdate: birthdate ?? user.birthdate,
-        gender: gender ?? user.gender,
-        profile_url: profile_url ?? user.profile_url,
+      final updated = user.copyWith(
+        firstName: firstName,
+        lastName: lastName,
+        birthdate: birthdate,
+        gender: gender,
+        profile_url: profile_url,
         firstLogin: false,
       );
-
-      state = state.copyWith(user: updatedUser, isLoading: false);
-      _authService.updateUser(user.id, updatedUser.toMap());
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      await _authService.updateUser(user.id, updated.toMap());
+      state = state.copyWith(user: updated, isLoading: false);
+    } catch (error) {
+      state = state.copyWith(isLoading: false, error: error.toString());
       rethrow;
     }
   }
 
-  /* -----------------------
-   * LOGOUT
-   * ----------------------- */
+  Future<void> refreshRoleClaims() => _authService.refreshRoleClaims();
+
   Future<void> logout() async {
     await _authService.logout();
-    state = AuthState();
+    _notificationUid = null;
+    state = const AuthState();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }
 
-/// =======================
-/// PROVIDERS
-/// =======================
-
-final authServiceProvider = Provider<AuthService>((ref) {
-  return AuthService();
-});
+final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
   (ref) {
-    final authService = ref.read(authServiceProvider);
-    return AuthController(authService);
+    return AuthController(ref.read(authServiceProvider));
   },
 );
 
 final authStateProvider = StreamProvider<UserModel?>((ref) {
-  final authService = ref.watch(authServiceProvider);
-  return authService.authStateChanges();  
+  return ref.watch(authServiceProvider).authStateChanges();
 });

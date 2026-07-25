@@ -1,70 +1,44 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:geoflutterfire2/geoflutterfire2.dart';
-import '../data/incident_model.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:thai_safe/features/incidents/data/incident_model.dart';
 
 class IncidentService {
-  final CollectionReference<Map<String, dynamic>> _incidentsRef =
-      FirebaseFirestore.instance.collection('incidents');
-  final geo = GeoFlutterFire();
+  IncidentService({FirebaseFirestore? firestore})
+    : _incidents = (firestore ?? FirebaseFirestore.instance).collection(
+        'incidents',
+      );
 
-  final Reference _storageRef = FirebaseStorage.instance.ref().child(
-    'incident_proofs',
-  );
-
-  Future<void> createIncident(
-    IncidentModel incident
-  ) async {
-
-    // 2. เตรียมข้อมูลบันทึก
-    Map<String, dynamic> data = incident.toMap();
-
-    // 3. บันทึกลง Firestore (อันนี้ฟรี ไม่ต้องใช้บัตร)
-    await _incidentsRef.doc(incident.id).set(data);
-  }
+  final CollectionReference<Map<String, dynamic>> _incidents;
 
   Stream<List<IncidentModel>> getIncidentsStream() {
-    return _incidentsRef
+    return _incidents
         .orderBy('created_at', descending: true)
+        .limit(250)
         .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            try {
-              return IncidentModel.fromMap(doc.data(), docId: doc.id);
-            } catch (e) {
-              print('Error parsing incident ${doc.id}: $e');
-              // ดัก Error ไว้ เพื่อไม่ให้ Stream พังถ้าข้อมูลแถวใดแถวหนึ่งเสีย
-              // อาจจะ return IncidentModel เปล่าๆ หรือกรองทิ้งที่ UI
-              rethrow;
-            }
-          }).toList();
-        });
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => IncidentModel.fromMap(doc.data(), docId: doc.id))
+              .toList(growable: false),
+        );
   }
 
   Stream<List<IncidentModel>> getIncidentsWithinKmRadius(
-    double userLat,
-    double userLng,
-    double radiusInKm,
+    double userLatitude,
+    double userLongitude,
+    double radiusKm,
   ) {
-    final center = geo.point(latitude: userLat, longitude: userLng);
-
-    return geo
-        .collection(collectionRef: _incidentsRef)
-        .within(
-          center: center,
-          radius: radiusInKm,
-          field: 'position',
-          strictMode: true,
-        )
-        .map(
-          (docs) => docs
-              .map(
-                (doc) => IncidentModel.fromMap(
-                  doc.data() as Map<String, dynamic>,
-                  docId: doc.id,
-                ),
-              )
-              .toList(),
-        );
+    return getIncidentsStream().map(
+      (incidents) => incidents
+          .where((incident) {
+            final distanceM = Geolocator.distanceBetween(
+              userLatitude,
+              userLongitude,
+              incident.latitude,
+              incident.longitude,
+            );
+            return distanceM <= radiusKm * 1000;
+          })
+          .toList(growable: false),
+    );
   }
 }
