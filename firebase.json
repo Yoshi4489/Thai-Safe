@@ -1,1 +1,68 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"thai-safe-967b9","appId":"1:796274817197:android:eae1a4a9899b91dd53ee24","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"thai-safe-967b9","configurations":{"android":"1:796274817197:android:eae1a4a9899b91dd53ee24","ios":"1:796274817197:ios:eb50c7958a88b55c53ee24","macos":"1:796274817197:ios:eb50c7958a88b55c53ee24","web":"1:796274817197:web:16e348d173a68f2d53ee24","windows":"1:796274817197:web:aa81ba04f0196d8553ee24"}}}}}}
+{
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ],
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "functions": {
+      "port": 5001
+    },
+    "firestore": {
+      "port": 8080
+    },
+    "storage": {
+      "port": 9199
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    },
+    "singleProjectMode": true
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "thai-safe-967b9",
+          "appId": "1:796274817197:android:eae1a4a9899b91dd53ee24",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "thai-safe-967b9",
+          "configurations": {
+            "android": "1:796274817197:android:eae1a4a9899b91dd53ee24",
+            "ios": "1:796274817197:ios:eb50c7958a88b55c53ee24",
+            "macos": "1:796274817197:ios:eb50c7958a88b55c53ee24",
+            "web": "1:796274817197:web:16e348d173a68f2d53ee24",
+            "windows": "1:796274817197:web:aa81ba04f0196d8553ee24"
+          }
+        }
+      }
+    }
+  }
+}

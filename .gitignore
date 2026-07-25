@@ -12,6 +12,19 @@
 .swiftpm/
 migrate_working_dir/
 .env
+.env.*
+!.env.example
+
+# Node/Firebase generated output
+**/node_modules/
+functions/lib/
+.firebase/
+
+# Credentials and release signing material
+*.jks
+*.keystore
+*service-account*.json
+*serviceAccount*.json
 
 # IntelliJ related
 *.iml

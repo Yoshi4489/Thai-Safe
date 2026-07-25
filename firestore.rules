@@ -1,0 +1,134 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function role() {
+      return signedIn() && request.auth.token.keys().hasAny(['role'])
+        && request.auth.token.role is string
+        ? request.auth.token.role
+        : 'user';
+    }
+
+    function isAdmin() {
+      return role() == 'admin';
+    }
+
+    function isResponder() {
+      return role() == 'responder';
+    }
+
+    function immutableUserFields() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly([
+          'first_name',
+          'last_name',
+          'birthdate',
+          'gender',
+          'profile_url',
+          'firstLogin',
+          'notification_preferences',
+          'trusted_contacts',
+          'updated_at'
+        ]);
+    }
+
+    match /users/{uid} {
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(uid)
+        && request.resource.data.id == uid
+        && request.resource.data.role == 'user';
+      allow update: if isOwner(uid) && immutableUserFields();
+      allow delete: if false;
+
+      match /devices/{deviceId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly([
+            'token',
+            'platform',
+            'enabled',
+            'locale',
+            'updated_at'
+          ]);
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if isOwner(uid);
+        allow update: if isOwner(uid)
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['read_at']);
+        allow create, delete: if false;
+      }
+    }
+
+    // This collection contains only sanitized, approximate incident data.
+    match /incidents/{incidentId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // Reporters can review their own private report. Responders receive
+    // assignment-scoped data only through a callable function.
+    match /incident_private/{incidentId} {
+      allow get: if signedIn()
+        && (resource.data.reporter_uid == request.auth.uid || isAdmin());
+      allow list, create, update, delete: if false;
+    }
+
+    match /incident_assignments/{incidentId} {
+      allow get: if signedIn() && (
+        isAdmin()
+        || resource.data.lead_responder_uid == request.auth.uid
+        || resource.data.reporter_uid == request.auth.uid
+      );
+      allow list: if signedIn() && (
+        isAdmin() || (
+          isResponder()
+          && resource.data.lead_responder_uid == request.auth.uid
+        )
+      );
+      allow write: if false;
+    }
+
+    match /responder_applications/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if false;
+    }
+
+    match /medical_profiles/{uid} {
+      allow read, create, update: if isOwner(uid);
+      allow delete: if false;
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /incident_abuse_reports/{reportId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /incident_requests/{requestId} {
+      allow read, write: if false;
+    }
+
+    match /rate_limits/{limitId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

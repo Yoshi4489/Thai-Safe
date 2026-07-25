@@ -1,0 +1,35 @@
+{
+  "conditions": [],
+  "parameters": {
+    "sos_enabled": {
+      "defaultValue": { "value": "true" },
+      "description": "Emergency kill switch"
+    },
+    "incident_enrichment_enabled": {
+      "defaultValue": { "value": "true" }
+    },
+    "responder_operations_enabled": {
+      "defaultValue": { "value": "true" }
+    },
+    "minimum_android_build": {
+      "defaultValue": { "value": "1" }
+    },
+    "map_tile_url": {
+      "defaultValue": {
+        "value": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+      },
+      "description": "Replace with a production tile provider before rollout"
+    },
+    "map_attribution": {
+      "defaultValue": { "value": "© OpenStreetMap contributors" }
+    },
+    "emergency_directory": {
+      "defaultValue": {
+        "value": "[{\"label\":\"Emergency Medical Services\",\"number\":\"1669\"},{\"label\":\"Police Emergency\",\"number\":\"191\"},{\"label\":\"Fire and Rescue\",\"number\":\"199\"}]"
+      }
+    }
+  },
+  "version": {
+    "description": "Thai Safe production-safety defaults"
+  }
+}

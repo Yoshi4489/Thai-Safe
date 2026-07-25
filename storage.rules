@@ -1,0 +1,40 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.keys().hasAny(['role'])
+        && request.auth.token.role == 'admin';
+    }
+
+    function validImage() {
+      return request.resource != null
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /incident_media/{incidentId}/{uid}/{fileName} {
+      allow write: if signedIn() && request.auth.uid == uid && validImage();
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+    }
+
+    match /responder_evidence/{uid}/{fileName} {
+      allow write: if signedIn() && request.auth.uid == uid && validImage();
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+    }
+
+    match /profile_images/{uid}/{fileName} {
+      allow write: if signedIn() && request.auth.uid == uid && validImage();
+      allow read: if signedIn();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

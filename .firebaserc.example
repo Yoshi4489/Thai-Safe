@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "development": "thai-safe-development",
+    "staging": "thai-safe-staging",
+    "production": "thai-safe-production"
+  }
+}
