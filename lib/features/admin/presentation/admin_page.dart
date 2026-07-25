@@ -5,8 +5,8 @@ import 'package:thai_safe/features/maps_alert/presentation/pages/incident_detail
 import 'package:thai_safe/core/widgets/skeleton_loading.dart';
 
 class AdminHomePage extends ConsumerStatefulWidget {
-  Function(int) onNavigate;
-  AdminHomePage({super.key, required this.onNavigate});
+  final ValueChanged<int> onNavigate;
+  const AdminHomePage({super.key, required this.onNavigate});
   @override
   ConsumerState<AdminHomePage> createState() => _AdminHomePageState();
 }
@@ -26,54 +26,56 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await ref.read(adminIncidentControllerProvider.notifier).loadIncidentsData();
+          await ref
+              .read(adminIncidentControllerProvider.notifier)
+              .loadIncidentsData();
         },
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// ADMIN WELCOME
-            _adminWelcome(),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// ADMIN WELCOME
+              _adminWelcome(),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            /// STATISTICS
-            const Text(
-              "System Overview",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+              /// STATISTICS
+              const Text(
+                "System Overview",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            _dashboardStats(ref),
+              _dashboardStats(ref),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            /// QUICK ACTIONS
-            const Text(
-              "Admin Actions",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+              /// QUICK ACTIONS
+              const Text(
+                "Admin Actions",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            _adminActions(context),
+              _adminActions(context),
 
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            /// RECENT INCIDENTS
-            const Text(
-              "Recent Incidents",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+              /// RECENT INCIDENTS
+              const Text(
+                "Recent Incidents",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
 
-            _recentIncidents(),
-          ],
+              _recentIncidents(),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -104,7 +106,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
 
   Widget _dashboardStats(WidgetRef ref) {
     final incidentController = ref.watch(adminIncidentControllerProvider);
-    
+
     if (incidentController.isLoading) {
       return Row(
         children: [
@@ -116,7 +118,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
         ],
       );
     }
-    
+
     return Row(
       children: [
         Expanded(
@@ -257,16 +259,18 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
 
         return GestureDetector(
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(
-              builder: (_) => IncidentDetailsPage(incident: recentIncident),
-            ));
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => IncidentDetailsPage(incident: recentIncident),
+              ),
+            );
           },
           child: Container(
             margin: const EdgeInsets.symmetric(
               vertical: 6,
             ), // space between items
             decoration: BoxDecoration(
-              
               color: Colors.grey.shade100,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(

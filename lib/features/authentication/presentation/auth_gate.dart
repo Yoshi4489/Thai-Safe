@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/core/widgets/boot_loading_page.dart';
-import 'package:thai_safe/features/admin/presentation/admin_page.dart';
 import 'package:thai_safe/features/app_shell.dart';
 import 'package:thai_safe/features/authentication/presentation/signup_profile_page.dart';
 import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
@@ -13,7 +12,7 @@ class AuthGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authAsync = ref.watch(authStateProvider);
-    
+
     return authAsync.when(
       loading: () => const BootLoadingPage(),
       error: (e, stack) {
@@ -24,7 +23,9 @@ class AuthGate extends ConsumerWidget {
         return Scaffold(
           body: Center(
             child: Padding(
-              padding: const EdgeInsets.all(24.0), // เพิ่ม Padding ไม่ให้ตัวหนังสือชิดขอบจอเกินไป
+              padding: const EdgeInsets.all(
+                24.0,
+              ), // เพิ่ม Padding ไม่ให้ตัวหนังสือชิดขอบจอเกินไป
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -33,14 +34,14 @@ class AuthGate extends ConsumerWidget {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // 2. แสดง Error บนหน้าจอ (สีแดง)
                   Text(
                     'รายละเอียด: $e',
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.red),
                   ),
-                  
+
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () => ref.refresh(authStateProvider),

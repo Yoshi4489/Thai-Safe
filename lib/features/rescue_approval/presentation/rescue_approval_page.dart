@@ -2,172 +2,177 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thai_safe/features/rescue_approval/data/resque_request_model.dart';
 import 'package:thai_safe/features/rescue_approval/provider/rescue_approval_provider.dart';
-import 'package:thai_safe/features/authentication/providers/auth_state_provider.dart';
-import 'package:thai_safe/core/widgets/skeleton_loading.dart';
 
-class RescueApprovalPage extends ConsumerStatefulWidget {
+class RescueApprovalPage extends ConsumerWidget {
   const RescueApprovalPage({super.key});
 
   @override
-  ConsumerState<RescueApprovalPage> createState() => _RescueApprovalPageState();
-}
-
-class _RescueApprovalPageState extends ConsumerState<RescueApprovalPage> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(rescueApprovalControllerProvider);
     final controller = ref.read(rescueApprovalControllerProvider.notifier);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Rescue Team Approval",           style: TextStyle(fontSize: 14),),
         automaticallyImplyLeading: false,
+        title: const Text('Responder verification'),
       ),
-
       body: RefreshIndicator(
-        onRefresh: () async {
-          await controller.loadRescurerList();
-        },
-
-        child: Builder(
-          builder: (context) {
-            /// Loading
-            if (state.isLoading) {
-              return ListView.separated(
+        onRefresh: controller.loadRescurerList,
+        child: state.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : state.error?.isNotEmpty == true
+            ? ListView(
+                children: [
+                  const SizedBox(height: 120),
+                  Center(child: Text(state.error!)),
+                ],
+              )
+            : state.rescurerList.isEmpty
+            ? ListView(
+                children: const [
+                  SizedBox(height: 120),
+                  Center(child: Text('No pending applications')),
+                ],
+              )
+            : ListView.separated(
                 padding: const EdgeInsets.all(16),
-                itemCount: 4,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) => SkeletonRescueApprovalCard(),
-              );
-            }
+                itemCount: state.rescurerList.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
+                itemBuilder: (_, index) => _ApplicationCard(
+                  request: state.rescurerList[index],
+                  onChanged: controller.loadRescurerList,
+                ),
+              ),
+      ),
+    );
+  }
+}
 
-            /// Error
-            if (state.error != null && state.error!.isNotEmpty) {
-              return Center(child: Text(state.error!));
-            }
+class _ApplicationCard extends ConsumerStatefulWidget {
+  const _ApplicationCard({required this.request, required this.onChanged});
 
-            /// Empty
-            if (state.rescurerList.isEmpty) {
-              return const Center(child: Text("No rescue requests"));
-            }
+  final RescueRequestModel request;
+  final Future<void> Function() onChanged;
 
-            /// List
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.rescurerList.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final request = state.rescurerList[index];
-                return _approvalCard(request);
-              },
-            );
-          },
+  @override
+  ConsumerState<_ApplicationCard> createState() => _ApplicationCardState();
+}
+
+class _ApplicationCardState extends ConsumerState<_ApplicationCard> {
+  bool _busy = false;
+  String? _error;
+
+  Future<void> _review(String action) async {
+    final service = ref.read(rescueApprovalService);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      if (action == 'approve') {
+        await service.approveRescueRequest(
+          widget.request.id,
+          'custom-claim-admin',
+          widget.request.userId,
+        );
+      } else {
+        await service.rejectRescueRequest(
+          widget.request.userId,
+          'custom-claim-admin',
+        );
+      }
+      await widget.onChanged();
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _error = error.toString();
+          _busy = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showEvidence() async {
+    final urls = await ref
+        .read(rescueApprovalService)
+        .evidenceUrls(widget.request);
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              const Text(
+                'Protected verification evidence',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              ...urls.map(
+                (url) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Image.network(url),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _approvalCard(RescueRequestModel request) {
-    final service = ref.read(rescueApprovalService);
-    final authController = ref.read(authControllerProvider);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /// Name
-          Text(
-            request.name,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-
-          const SizedBox(height: 6),
-
-          /// Phone
-          Text("Phone: ${request.phone}"),
-
-          const SizedBox(height: 6),
-
-          /// Date
-          Text(
-            "Requested: ${request.createdAt.toLocal()}",
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-
-          const SizedBox(height: 12),
-
-          /// Buttons
-          Row(
-            children: [
-              /// APPROVE
-              Expanded(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.check, color: Colors.white),
-                  label: const Text(
-                    "Approve",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                  ),
-                  onPressed: () async {
-                    await service.approveRescueRequest(
-                      request.id,
-                      authController.user!.id,
-                      request.userId,
-                    );
-
-                    if (!mounted) return;
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Rescue team approved")),
-                    );
-
-                    ref
-                        .read(rescueApprovalControllerProvider.notifier)
-                        .loadRescurerList();
-                  },
-                ),
+  @override
+  Widget build(BuildContext context) {
+    final request = widget.request;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              request.organization,
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            ),
+            Text('Applicant UID: ${request.userId}'),
+            Text(
+              'Identity document ending: ••••${request.identityNumberLast4}',
+            ),
+            Text('Submitted: ${request.createdAt.toLocal()}'),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: _busy ? null : _showEvidence,
+              icon: const Icon(Icons.verified_user_outlined),
+              label: Text(
+                'Review ${request.evidencePaths.length} evidence file(s)',
               ),
-
-              const SizedBox(width: 10),
-
-              /// REJECT
-              Expanded(
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  label: const Text(
-                    "Reject",
-                    style: TextStyle(color: Colors.white),
+            ),
+            if (_error != null)
+              Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _busy ? null : () => _review('approve'),
+                    icon: const Icon(Icons.check),
+                    label: const Text('Approve'),
                   ),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  onPressed: () async {
-                    await service.rejectRescueRequest(
-                      request.id,
-                      authController.user!.id,
-                    );
-
-                    if (!mounted) return;
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Rescue team rejected")),
-                    );
-
-                    ref
-                        .read(rescueApprovalControllerProvider.notifier)
-                        .loadRescurerList();
-                  },
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _busy ? null : () => _review('reject'),
+                    icon: const Icon(Icons.close),
+                    label: const Text('Reject'),
+                  ),
+                ),
+              ],
+            ),
+            if (_busy) const LinearProgressIndicator(),
+          ],
+        ),
       ),
     );
   }
